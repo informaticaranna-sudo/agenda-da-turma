@@ -159,11 +159,14 @@ const aluna=()=>db.alunas.find(a=>a.id===(prof()?db.sel:user.alunaId));
 
 /* ---------- login ---------- */
 function entrar(email,senha,papel){
-  const u=db.users.find(u=>u.email.toLowerCase()===email.trim().toLowerCase()&&u.senha===senha);
-  if(!u){$("#err").textContent="E-mail ou senha incorretos. Confira os dados ou crie uma conta.";return}
-  /* verifica o tipo de cadastro (professora x aluna) */
-  if(papel==="prof"&&u.role!=="prof"){$("#err").textContent="Este cadastro é de aluno(a). Use o botão “Entrar como aluno”.";return}
-  if(papel==="aluna"&&u.role!=="aluna"){$("#err").textContent="Este cadastro é de professora. Use o botão “Entrar”.";return}
+  /* o mesmo e-mail pode ter um cadastro de professora e outro de aluna: o botão escolhe qual */
+  const mesmos=db.users.filter(u=>u.email.trim().toLowerCase()===email.trim().toLowerCase());
+  const ue=mesmos.find(u=>u.role===papel);
+  if(!ue){
+    $("#err").textContent=!mesmos.length?"Este e-mail não tem cadastro neste navegador. A professora precisa cadastrar a aluna (com senha) neste mesmo aparelho/navegador.":papel==="prof"?"Este e-mail é de aluno(a). Use o botão “Entrar como aluno”.":"Este e-mail não tem cadastro de aluna. A professora precisa definir a senha da aluna na aba “Dados da Aluna”.";
+    return}
+  const u=ue.senha.trim()===senha.trim()?ue:null;
+  if(!u){$("#err").textContent="Senha incorreta para este e-mail. Confira a senha (a professora vê a senha da aluna na aba “Dados da Aluna”).";return}
   user=u;$("#err").textContent="";$("#login").classList.add("hide");$("#app").classList.remove("hide");
   if(prof()&&!db.alunas.some(a=>a.id===db.sel))db.sel=db.alunas[0]?.id;
   aba=0;render();window.scrollTo(0,0);
@@ -183,13 +186,13 @@ function dialogo(html,ok){
 $("#criar").onclick=()=>dialogo('<h3>Criar conta de professora</h3><label>Nome</label><input name="nome"><label>E-mail</label><input name="email" type="email"><label>Senha (mín. 6 caracteres)</label><input name="senha" type="password">',v=>{
   if(!v.nome||!v.email.includes("@"))return"Informe nome e um e-mail válido.";
   if(v.senha.length<6)return"A senha precisa ter pelo menos 6 caracteres.";
-  if(db.users.some(u=>u.email.toLowerCase()===v.email.toLowerCase()))return"Este e-mail já está cadastrado.";
+  if(db.users.some(u=>u.role==="prof"&&u.email.toLowerCase()===v.email.toLowerCase()))return"Já existe uma professora com este e-mail.";
   db.users.push({email:v.email,senha:v.senha,nome:v.nome,role:"prof"});salvar();$("#em").value=v.email;$("#sn").value="";$("#err").textContent="Conta criada. Digite sua senha para entrar.";
 });
 $("#cad").onclick=()=>dialogo('<h3>Cadastrar aluna</h3><label>Nome completo</label><input name="nome"><label>E-mail (será o login)</label><input name="email" type="email"><label>Instrumento</label><input name="instr" value="Piano"><label>Nível</label><select name="nivel"><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select><label>Senha de acesso da aluna (mín. 6 caracteres)</label><input name="senha" value="123456">',v=>{
   if(!v.nome||!v.email.includes("@"))return"Informe nome e um e-mail válido.";
   if((v.senha||"").length<6)return"A senha precisa ter pelo menos 6 caracteres.";
-  if(db.users.some(u=>u.email.toLowerCase()===v.email.toLowerCase()))return"Este e-mail já está cadastrado.";
+  if(db.users.some(u=>u.role==="aluna"&&u.email.toLowerCase()===v.email.toLowerCase()))return"Já existe uma aluna com este e-mail.";
   const a=novaAluna(v.nome,v.email,v.nivel,{instr:v.instr||"Piano"});db.alunas.push(a);
   db.users.push({email:v.email,senha:v.senha||"123456",nome:v.nome,role:"aluna",alunaId:a.id});db.sel=a.id;salvar();render();
 });
@@ -225,7 +228,7 @@ function dados(a,el){
   if(prof())$("#sv").onclick=()=>{
     const u=db.users.find(u=>u.alunaId===a.id),sn=$("#fsenha").value.trim(),em=$("#femail").value.trim();
     if(sn&&sn.length<6){$("#ok").textContent="A senha precisa ter pelo menos 6 caracteres.";return}
-    if(db.users.some(x=>x!==u&&x.email.toLowerCase()===em.toLowerCase())){$("#ok").textContent="Este e-mail já está cadastrado.";return}
+    if(db.users.some(x=>x!==u&&x.role==="aluna"&&x.email.toLowerCase()===em.toLowerCase())){$("#ok").textContent="Já existe outra aluna com este e-mail.";return}
     el.querySelectorAll("[data-k]").forEach(i=>a[i.dataset.k]=i.value.trim());
     if(u){u.email=a.email;u.nome=a.nome;if(sn)u.senha=sn}else if(sn)db.users.push({email:a.email,senha:sn,nome:a.nome,role:"aluna",alunaId:a.id});
     salvar();render();$("#ok").textContent="Dados salvos."};
