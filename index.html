@@ -136,8 +136,8 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 const hoje=()=>new Date().toISOString().slice(0,10);
 const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const DIAS=["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
-const CATS=[["msa","Fases MSA",16,"Fase"],["escalas","Escalas",30,"Escala"],["hinos","Hinos",480,"Hino"],["v1","Volume 1",65,"Lição"],["v2","Volume 2",50,"Lição"],["v3","Volume 3",35,"Lição"],["v4","Volume 4",22,"Lição"],["pozzoli","Pozzoli",35,"Exercício"]];
-const GRUPOS={MSA:["msa"],Volumes:["v1","v2","v3","v4"],Hinos:["hinos"],Escalas:["escalas"],Pozzoli:["pozzoli"]};
+const CATS=[["msa","Fases MSA",16,"Fase"],["escalas","Escalas",30,"Escala"],["hinos","Hinos",480,"Hino"],["v1","Volume 1",65,"Lição"],["v2","Volume 2",50,"Lição"],["v3","Volume 3",35,"Lição"],["v4","Volume 4",22,"Lição"]];
+const GRUPOS={MSA:["msa"],Volumes:["v1","v2","v3","v4"],Hinos:["hinos"],Escalas:["escalas"]};
 const novaAluna=(nome,email,nivel,extra={})=>({id:uid(),nome,email,instr:"Piano",nivel,tel:"",nasc:"",inicio:hoje(),mensal:"",notas:[],crono:{},metodos:"",anots:[],pagos:{},prog:{},pratica:{},...extra});
 
 function carregar(){
@@ -228,7 +228,7 @@ function crono(a,el){
   $("#sv").onclick=()=>{el.querySelectorAll("[data-d]").forEach(t=>a.crono[t.dataset.d]=t.value);salvar();$("#ok").textContent="Salvo."};
 }
 function metodos(a,el){
-  el.innerHTML=cabec("🎵 Anotações dos Métodos","Observações sobre MSA, volumes, Pozzoli e outros métodos.")+`<label for="m" class="hide">Anotações</label><textarea id="m" style="min-height:240px">${esc(a.metodos)}</textarea><p><button class="pri" id="sv">Salvar</button> <span class="hint" id="ok"></span></p>`;
+  el.innerHTML=cabec("🎵 Anotações dos Métodos","Observações sobre MSA, volumes e outros métodos.")+`<label for="m" class="hide">Anotações</label><textarea id="m" style="min-height:240px">${esc(a.metodos)}</textarea><p><button class="pri" id="sv">Salvar</button> <span class="hint" id="ok"></span></p>`;
   $("#sv").onclick=()=>{a.metodos=$("#m").value;salvar();$("#ok").textContent="Salvo."};
 }
 function anots(a,el){
