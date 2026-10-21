@@ -84,6 +84,7 @@ td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}
 .itens{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
 .it{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:6px 10px;background:var(--paper);font-size:.9rem;cursor:pointer}
 .it input{width:auto}
+.it:has(input:disabled){cursor:default}
 .it.ok{background:#f4f4f4;text-decoration:line-through;color:var(--mute)}
 dialog{border:1px solid var(--line);border-radius:22px;background:var(--paper);color:var(--ink);max-width:420px;width:92%}
 dialog::backdrop{background:#0006}
@@ -108,6 +109,7 @@ dialog::backdrop{background:#0006}
     <label for="sn">Senha</label><input id="sn" type="password" placeholder="Sua senha" autocomplete="current-password">
     <p class="err" id="err" role="alert"></p>
     <button class="pri" style="width:100%" id="entrar">🎵 Entrar</button>
+    <button class="pri" style="width:100%;margin-top:10px;background:#fff;color:var(--wine)" id="entrarAl">🎹 Entrar como aluno</button>
     <div class="demo">
       <p>Acesso rápido à demonstração:</p>
       <button class="btn" id="dProf">👩‍🏫 Entrar como Professora</button>
@@ -156,18 +158,22 @@ const prof=()=>user&&user.role==="prof";
 const aluna=()=>db.alunas.find(a=>a.id===(prof()?db.sel:user.alunaId));
 
 /* ---------- login ---------- */
-function entrar(email,senha){
+function entrar(email,senha,papel){
   const u=db.users.find(u=>u.email.toLowerCase()===email.trim().toLowerCase()&&u.senha===senha);
   if(!u){$("#err").textContent="E-mail ou senha incorretos. Confira os dados ou crie uma conta.";return}
+  /* verifica o tipo de cadastro (professora x aluna) */
+  if(papel==="prof"&&u.role!=="prof"){$("#err").textContent="Este cadastro é de aluno(a). Use o botão “Entrar como aluno”.";return}
+  if(papel==="aluna"&&u.role!=="aluna"){$("#err").textContent="Este cadastro é de professora. Use o botão “Entrar”.";return}
   user=u;$("#err").textContent="";$("#login").classList.add("hide");$("#app").classList.remove("hide");
   if(prof()&&!db.alunas.some(a=>a.id===db.sel))db.sel=db.alunas[0]?.id;
   aba=0;render();window.scrollTo(0,0);
 }
-$("#entrar").onclick=()=>entrar($("#em").value,$("#sn").value);
+$("#entrar").onclick=()=>entrar($("#em").value,$("#sn").value,"prof");
+$("#entrarAl").onclick=()=>entrar($("#em").value,$("#sn").value,"aluna");
 $("#sn").onkeydown=e=>{if(e.key==="Enter")$("#entrar").click()};
-$("#dProf").onclick=()=>entrar("prof@musica.com","123456");
-$("#dAl").onclick=()=>entrar("maria@musica.com","123456");
-$("#sair").onclick=()=>{user=null;$("#app").classList.add("hide");$("#login").classList.remove("hide")};
+$("#dProf").onclick=()=>entrar("prof@musica.com","123456","prof");
+$("#dAl").onclick=()=>entrar("maria@musica.com","123456","aluna");
+$("#sair").onclick=()=>{user=null;$("#sn").value="";$("#err").textContent="";$("#app").classList.add("hide");$("#login").classList.remove("hide")};
 
 function dialogo(html,ok){
   $("#fm").innerHTML=html+'<p class="err" id="derr"></p><div class="row" style="margin-top:14px"><button type="button" class="btn" id="dx">Cancelar</button><button type="button" class="pri" id="dok">Salvar</button></div>';
@@ -180,8 +186,9 @@ $("#criar").onclick=()=>dialogo('<h3>Criar conta de professora</h3><label>Nome</
   if(db.users.some(u=>u.email.toLowerCase()===v.email.toLowerCase()))return"Este e-mail já está cadastrado.";
   db.users.push({email:v.email,senha:v.senha,nome:v.nome,role:"prof"});salvar();$("#em").value=v.email;$("#sn").value="";$("#err").textContent="Conta criada. Digite sua senha para entrar.";
 });
-$("#cad").onclick=()=>dialogo('<h3>Cadastrar aluna</h3><label>Nome completo</label><input name="nome"><label>E-mail (será o login)</label><input name="email" type="email"><label>Instrumento</label><input name="instr" value="Piano"><label>Nível</label><select name="nivel"><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select><label>Senha inicial</label><input name="senha" value="123456">',v=>{
+$("#cad").onclick=()=>dialogo('<h3>Cadastrar aluna</h3><label>Nome completo</label><input name="nome"><label>E-mail (será o login)</label><input name="email" type="email"><label>Instrumento</label><input name="instr" value="Piano"><label>Nível</label><select name="nivel"><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select><label>Senha de acesso da aluna (mín. 6 caracteres)</label><input name="senha" value="123456">',v=>{
   if(!v.nome||!v.email.includes("@"))return"Informe nome e um e-mail válido.";
+  if((v.senha||"").length<6)return"A senha precisa ter pelo menos 6 caracteres.";
   if(db.users.some(u=>u.email.toLowerCase()===v.email.toLowerCase()))return"Este e-mail já está cadastrado.";
   const a=novaAluna(v.nome,v.email,v.nivel,{instr:v.instr||"Piano"});db.alunas.push(a);
   db.users.push({email:v.email,senha:v.senha||"123456",nome:v.nome,role:"aluna",alunaId:a.id});db.sel=a.id;salvar();render();
@@ -204,7 +211,7 @@ const ABAS=["🧑‍🎓 1. Dados da Aluna","🏆 2. Notas","📅 3. Cronograma 
 function caderno(){
   const a=aluna(),c=$("#caderno");
   if(!a){c.innerHTML='<div class="cab"><h2>Caderno da Aluna</h2><p class="hint">Cadastre uma aluna para abrir o caderno.</p></div>';return}
-  c.innerHTML=`<div class="cab"><h2>🎼 Caderno da Aluna 🎼</h2><div class="sub" style="margin:4px 0">🎵 ${esc(a.nome)} • ${esc(a.instr)} • Nível ${esc(a.nivel)} 🎵</div><span class="tag">${prof()?"Modo Professora — você pode editar tudo":"Modo Aluna — você edita sua jornada e anotações"}</span></div>
+  c.innerHTML=`<div class="cab"><h2>🎼 Caderno da Aluna 🎼</h2><div class="sub" style="margin:4px 0">🎵 ${esc(a.nome)} • ${esc(a.instr)} • Nível ${esc(a.nivel)} 🎵</div><span class="tag">${prof()?"Modo Professora — você pode editar tudo":"Modo Aluna — você pode ver tudo e editar apenas o cronograma e as anotações"}</span></div>
   <div class="tabs" role="tablist">${ABAS.map((t,i)=>`<button class="tab ${i===aba?"on":""}" role="tab" aria-selected="${i===aba}" data-t="${i}">${t}</button>`).join("")}</div><div class="sec" id="sec"></div>`;
   c.querySelector(".tabs").onclick=e=>{const t=e.target.closest("[data-t]");if(t){aba=+t.dataset.t;caderno()}};
   [dados,notas,crono,metodos,anots,pagto,jornada][aba](a,$("#sec"));
@@ -214,8 +221,14 @@ const cabec=(t,s)=>`<h3>${t}</h3><p class="hint">${s}</p>`;
 function dados(a,el){
   const ro=prof()?"":"disabled";
   const f=(k,l,t="text")=>`<div><label for="f${k}">${l}</label><input id="f${k}" data-k="${k}" type="${t}" value="${esc(a[k])}" ${ro}></div>`;
-  el.innerHTML=cabec("🧑‍🎓 Dados da Aluna","Cadastro completo — edite e salve.")+`<div class="grid">${f("nome","Nome completo")}${f("email","E-mail de acesso","email")}${f("instr","Instrumento")}<div><label for="fnivel">Nível</label><select id="fnivel" data-k="nivel" ${ro}>${["Iniciante","Intermediário","Avançado"].map(n=>`<option ${n===a.nivel?"selected":""}>${n}</option>`).join("")}</select></div>${f("tel","Telefone / WhatsApp","tel")}${f("nasc","Nascimento","date")}${f("inicio","Início das aulas","date")}</div>${prof()?'<p><button class="pri" id="sv">Salvar dados</button> <span id="ok" class="hint"></span></p>':""}`;
-  if(prof())$("#sv").onclick=()=>{const old=a.email;el.querySelectorAll("[data-k]").forEach(i=>a[i.dataset.k]=i.value.trim());const u=db.users.find(u=>u.alunaId===a.id);if(u){u.email=a.email;u.nome=a.nome}salvar();render();$("#ok")&&0};
+  el.innerHTML=cabec("🧑‍🎓 Dados da Aluna","Cadastro completo — edite e salve.")+`<div class="grid">${f("nome","Nome completo")}${f("email","E-mail de acesso","email")}${f("instr","Instrumento")}<div><label for="fnivel">Nível</label><select id="fnivel" data-k="nivel" ${ro}>${["Iniciante","Intermediário","Avançado"].map(n=>`<option ${n===a.nivel?"selected":""}>${n}</option>`).join("")}</select></div>${f("tel","Telefone / WhatsApp","tel")}${f("nasc","Nascimento","date")}${f("inicio","Início das aulas","date")}${prof()?`<div><label for="fsenha">Senha de acesso da aluna</label><input id="fsenha" data-u="senha" type="text" value="${esc((db.users.find(u=>u.alunaId===a.id)||{}).senha||"")}" placeholder="mín. 6 caracteres" autocomplete="off"></div>`:""}</div>${prof()?'<p><button class="pri" id="sv">Salvar dados</button> <span id="ok" class="hint"></span></p>':""}`;
+  if(prof())$("#sv").onclick=()=>{
+    const u=db.users.find(u=>u.alunaId===a.id),sn=$("#fsenha").value.trim(),em=$("#femail").value.trim();
+    if(sn&&sn.length<6){$("#ok").textContent="A senha precisa ter pelo menos 6 caracteres.";return}
+    if(db.users.some(x=>x!==u&&x.email.toLowerCase()===em.toLowerCase())){$("#ok").textContent="Este e-mail já está cadastrado.";return}
+    el.querySelectorAll("[data-k]").forEach(i=>a[i.dataset.k]=i.value.trim());
+    if(u){u.email=a.email;u.nome=a.nome;if(sn)u.senha=sn}else if(sn)db.users.push({email:a.email,senha:sn,nome:a.nome,role:"aluna",alunaId:a.id});
+    salvar();render();$("#ok").textContent="Dados salvos."};
 }
 
 function notas(a,el){
@@ -232,8 +245,9 @@ function crono(a,el){
   $("#sv").onclick=()=>{el.querySelectorAll("[data-d]").forEach(t=>a.crono[t.dataset.d]=t.value);salvar();$("#ok").textContent="Salvo."};
 }
 function metodos(a,el){
-  el.innerHTML=cabec("🎵 Anotações dos Métodos","Observações sobre MSA, volumes e outros métodos.")+`<label for="m" class="hide">Anotações</label><textarea id="m" style="min-height:240px">${esc(a.metodos)}</textarea><p><button class="pri" id="sv">Salvar</button> <span class="hint" id="ok"></span></p>`;
-  $("#sv").onclick=()=>{a.metodos=$("#m").value;salvar();$("#ok").textContent="Salvo."};
+  const ro=!prof();
+  el.innerHTML=cabec("🎵 Anotações dos Métodos","Observações sobre MSA, volumes e outros métodos."+(ro?" (somente leitura)":""))+`<label for="m" class="hide">Anotações</label><textarea id="m" style="min-height:240px" ${ro?"disabled":""}>${esc(a.metodos)}</textarea>${ro?"":'<p><button class="pri" id="sv">Salvar</button> <span class="hint" id="ok"></span></p>'}`;
+  if(!ro)$("#sv").onclick=()=>{if(!prof())return;a.metodos=$("#m").value;salvar();$("#ok").textContent="Salvo."};
 }
 function anots(a,el){
   el.innerHTML=cabec("📝 Anotações","Recados e observações datadas entre aula e casa.")+`<textarea id="an" placeholder="Escreva uma anotação..." style="min-height:90px"></textarea><p><button class="pri" id="aa">Adicionar anotação</button></p>`+(a.anots.length?a.anots.map((n,i)=>`<div class="al" style="display:block"><small>${esc(n.data)} • ${esc(n.autor)}</small><div>${esc(n.txt).replace(/\n/g,"<br>")}</div>${prof()||n.autor===user.nome?`<button class="x" data-r="${i}">🗑 Remover</button>`:""}</div>`).join(""):'<p class="hint">Sem anotações por enquanto.</p>');
@@ -249,26 +263,26 @@ function pagto(a,el){
 /* ---------- jornada ---------- */
 function jornada(a,el){
   const tot=CATS.reduce((s,c)=>s+c[2],0),feitos=k=>Object.keys(a.prog).filter(x=>x.startsWith(k+"-")).length,all=Object.keys(a.prog).length;
-  const pct=Math.round(all/tot*100),prat=a.pratica[hoje()]||0;
+  const pct=Math.round(all/tot*100),prat=a.pratica[hoje()]||0,ro=!prof();
   const vis=filtro==="Todos"?CATS:CATS.filter(c=>GRUPOS[filtro].includes(c[0]));
-  el.innerHTML=cabec("📈 Jornada da Aprendiz","Marque cada item concluído e acompanhe sua evolução.")+
+  el.innerHTML=cabec("📈 Jornada da Aprendiz",ro?"Acompanhe sua evolução. Quem marca os itens concluídos é a professora (somente leitura).":"Marque cada item concluído e acompanhe a evolução da aluna.")+
   `<div class="hero"><h3>Seu progresso geral</h3><div class="big mono">${pct}%</div><p style="margin:4px 0 0"><b>${all}</b> registro(s) de estudo concluído(s).</p><div class="bar"><i style="width:${pct}%"></i></div><button class="btn" id="vd">Ver detalhes</button></div>
   <h3 style="font-size:1.25rem;margin-top:20px">Hoje no seu ritmo</h3>
   <div class="stats"><div class="st"><b class="mono">${prat}</b><small>prática hoje</small></div>${CATS.map(c=>`<div class="st"><b class="mono">${feitos(c[0])}/${c[2]}</b><small>${c[1].toLowerCase()}</small></div>`).join("")}</div>
-  <p><button class="pri sm" id="pr">+ Registrar prática de hoje</button></p>
+  ${ro?"":'<p><button class="pri sm" id="pr">+ Registrar prática de hoje</button></p>'}
   <div class="chips" id="fl">${["Todos",...Object.keys(GRUPOS)].map(g=>`<button class="chip ${g===filtro?"on":""}" data-f="${g}">${g}</button>`).join("")}<input id="bs" type="search" placeholder="Buscar item..." value="${esc(busca)}" style="max-width:200px" aria-label="Buscar item"></div>
   <div class="chips">${[["Todos",all,tot],...CATS.map(c=>[c[1],feitos(c[0]),c[2]])].map(x=>`<span class="mini">${x[0]}<br><span class="mono">${Math.round(x[1]/x[2]*100)}%</span></span>`).join("")}</div>
   <div id="det">${vis.map(c=>{
     let ids=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>!busca||`${c[3]} ${n}`.toLowerCase().includes(busca.toLowerCase()));
     const lim=limite[c[0]]||(busca?500:48),mais=ids.length>lim;ids=ids.slice(0,lim);
-    return`<h3 style="font-size:1.1rem;margin-top:18px">${c[1]} <small class="mono" style="color:var(--mute)">${feitos(c[0])}/${c[2]}</small></h3><div class="itens">${ids.map(n=>`<label class="it ${a.prog[c[0]+"-"+n]?"ok":""}"><input type="checkbox" data-p="${c[0]}-${n}" ${a.prog[c[0]+"-"+n]?"checked":""}>${c[3]} ${n}</label>`).join("")||'<small class="hint">Nenhum item encontrado.</small>'}</div>${mais?`<p><button class="btn" data-m="${c[0]}">Mostrar mais</button></p>`:""}`}).join("")}</div>`;
+    return`<h3 style="font-size:1.1rem;margin-top:18px">${c[1]} <small class="mono" style="color:var(--mute)">${feitos(c[0])}/${c[2]}</small></h3><div class="itens">${ids.map(n=>`<label class="it ${a.prog[c[0]+"-"+n]?"ok":""}"><input type="checkbox" data-p="${c[0]}-${n}" ${a.prog[c[0]+"-"+n]?"checked":""} ${ro?"disabled":""}>${c[3]} ${n}</label>`).join("")||'<small class="hint">Nenhum item encontrado.</small>'}</div>${mais?`<p><button class="btn" data-m="${c[0]}">Mostrar mais</button></p>`:""}`}).join("")}</div>`;
   $("#vd").onclick=()=>$("#det").scrollIntoView();
-  $("#pr").onclick=()=>{a.pratica[hoje()]=prat+1;salvar();caderno()};
+  if(!ro)$("#pr").onclick=()=>{if(!prof())return;a.pratica[hoje()]=prat+1;salvar();caderno()};
   $("#bs").oninput=e=>{busca=e.target.value;const p=e.target.selectionStart;jornada(a,el);const b=$("#bs");b.focus();b.setSelectionRange(p,p)};
   el.onclick=e=>{const f=e.target.closest("[data-f]"),m=e.target.closest("[data-m]"),p=e.target.closest("[data-p]");
     if(f){filtro=f.dataset.f;jornada(a,el)}
     if(m){limite[m.dataset.m]=9999;jornada(a,el)}
-    if(p){if(p.checked)a.prog[p.dataset.p]=1;else delete a.prog[p.dataset.p];salvar();const y=scrollY;jornada(a,el);scrollTo(0,y)}};
+    if(p&&prof()){if(p.checked)a.prog[p.dataset.p]=1;else delete a.prog[p.dataset.p];salvar();const y=scrollY;jornada(a,el);scrollTo(0,y)}};
 }
 </script>
   <!-- 2) Cole antes de </body>, no fim do index.html -->
