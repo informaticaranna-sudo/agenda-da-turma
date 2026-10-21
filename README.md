@@ -70,7 +70,7 @@ Para uso real com várias alunas, o próximo passo é conectar o site a um banco
 ## Personalização
 
 Tudo está em `index.html`:
-- **Cores:** variáveis CSS no início do arquivo (`:root`), com versão para modo escuro.
+- **Cores:** variáveis CSS no início do arquivo (`:root`). O site é branco e o vinho (`--wine`) aparece apenas nos botões.
 - **Categorias da Jornada:** lista `CATS` no JavaScript (chave, nome, quantidade de itens e rótulo).
 - **Filtros da Jornada:** objeto `GRUPOS`.
 - **Dados de demonstração:** função `carregar()`.
