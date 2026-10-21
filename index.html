@@ -90,6 +90,12 @@ dialog::backdrop{background:#0006}
 @media(max-width:520px){.caderno{padding:18px 14px 18px 36px}.cab h2{font-size:1.5rem}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
+  <!-- 1) Cole dentro de <head> no index.html, antes de </head> -->
+<link rel="manifest" href="/agenda-da-turma/manifest.webmanifest">
+<meta name="theme-color" content="#D8C8FF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/agenda-da-turma/icons/icon-192.png">
 </head>
 <body>
 
@@ -265,5 +271,18 @@ function jornada(a,el){
     if(p){if(p.checked)a.prog[p.dataset.p]=1;else delete a.prog[p.dataset.p];salvar();const y=scrollY;jornada(a,el);scrollTo(0,y)}};
 }
 </script>
+  <!-- 2) Cole antes de </body>, no fim do index.html -->
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("/agenda-da-turma/service-worker.js", {
+        scope: "/agenda-da-turma/"
+      }).catch(function (error) {
+        console.error("Falha ao registrar o service worker:", error);
+      });
+    });
+  }
+</script>
+
 </body>
 </html>
