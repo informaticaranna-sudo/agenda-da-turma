@@ -1,0 +1,28 @@
+{
+  "id": "/agenda-da-turma/",
+  "name": "Agenda da Turma — Caderno de Estudos Musicais",
+  "short_name": "Agenda da Turma",
+  "description": "Caderno de estudos musicais para professora e alunas.",
+  "lang": "pt-BR",
+  "start_url": "/agenda-da-turma/",
+  "scope": "/agenda-da-turma/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F0FF",
+  "theme_color": "#D8C8FF",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/agenda-da-turma/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/agenda-da-turma/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
