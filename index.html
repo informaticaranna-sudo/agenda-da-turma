@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Agenda da Turma — cronograma de encontros, datas e carga horária.">
+<title>Agenda da Turma | Cronograma BR01/2026</title>
+<style>
+:root{--navy:#14213d;--blue:#3157d5;--blue2:#eaf0ff;--ink:#1f2937;--muted:#687386;--line:#e4e8f0;--bg:#f5f7fb;--white:#fff;--green:#16845b;--shadow:0 10px 30px rgba(25,42,80,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);line-height:1.5}
+button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:auto;padding:24px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:26px}.brand{display:flex;align-items:center;gap:12px;font-weight:800;color:var(--navy);letter-spacing:-.03em}.logo{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--blue);color:white;font-size:21px;box-shadow:0 6px 14px #3157d533}.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:white;color:var(--navy);padding:10px 14px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:8px}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn:hover{filter:brightness(.97)}
+.hero{background:linear-gradient(125deg,#172747,#2947a5);color:white;border-radius:24px;padding:clamp(24px,5vw,48px);position:relative;overflow:hidden;box-shadow:var(--shadow)}.hero:after{content:"";position:absolute;width:300px;height:300px;border:1px solid #ffffff24;border-radius:50%;right:-70px;top:-130px;box-shadow:0 0 0 35px #ffffff09,0 0 0 75px #ffffff06}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.14em;font-weight:800;color:#c6d4ff}.hero h1{font-size:clamp(30px,5vw,48px);letter-spacing:-.045em;line-height:1.08;margin:10px 0 12px;max-width:700px}.hero p{color:#dce5ff;margin:0;max-width:650px}.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #ffffff32;background:#ffffff12;border-radius:99px;padding:8px 12px;font-size:13px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0 28px}.stat{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 3px 10px #17274705}.stat .label{color:var(--muted);font-size:13px;font-weight:600}.stat .value{font-size:26px;font-weight:850;letter-spacing:-.04em;color:var(--navy);margin-top:3px}.stat .note{font-size:12px;color:var(--muted)}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:28px 0 16px}.section-head h2{font-size:23px;letter-spacing:-.035em;margin:0;color:var(--navy)}.section-head p{margin:4px 0 0;color:var(--muted);font-size:14px}.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}.filters input,.filters select{background:white;border:1px solid var(--line);border-radius:10px;padding:11px 13px;min-width:180px;color:var(--ink)}.filters input{flex:1;min-width:220px}
+.schedule{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.module{background:white;border:1px solid var(--line);border-radius:16px;padding:19px;box-shadow:0 4px 12px #17274704;transition:transform .15s,box-shadow .15s}.module:hover{transform:translateY(-2px);box-shadow:var(--shadow)}.module-top{display:flex;justify-content:space-between;align-items:start;gap:12px}.number{width:38px;height:38px;border-radius:11px;background:var(--blue2);color:var(--blue);font-weight:850;display:grid;place-items:center;flex-shrink:0}.module h3{margin:0;color:var(--navy);font-size:17px}.month{font-size:13px;color:var(--muted);margin-top:3px}.hours{white-space:nowrap;font-size:12px;font-weight:800;color:var(--green);background:#e7f7ef;border-radius:8px;padding:6px 8px}.dates{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:17px 0 14px}.date-box{border:1px solid var(--line);border-radius:11px;padding:11px}.date-box span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:800}.date-box strong{display:block;color:var(--navy);font-size:16px;margin-top:4px}.module-foot{border-top:1px solid var(--line);padding-top:12px;color:var(--muted);font-size:13px;display:flex;gap:8px;align-items:start}.empty{display:none;background:white;border:1px dashed #c9d1df;border-radius:14px;padding:30px;text-align:center;color:var(--muted)}
+.notice{display:flex;gap:12px;padding:16px;background:#fff9e9;border:1px solid #f2e3b6;border-radius:14px;color:#765719;font-size:14px;margin-top:22px}.notice strong{display:block;color:#63470e}.footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:32px;padding:20px 0;color:var(--muted);font-size:12px}
+@media(max-width:760px){.shell{padding:16px}.stats{grid-template-columns:repeat(2,1fr)}.schedule{grid-template-columns:1fr}.section-head{align-items:start;flex-direction:column}.topbar{align-items:start}.top-actions .btn{padding:9px 10px}.hero{border-radius:19px}.stat{padding:14px}.stat .value{font-size:23px}}
+@media print{body{background:white}.shell{max-width:none;padding:0}.top-actions,.filters,.notice{display:none!important}.hero{background:#eaf0ff!important;color:#14213d!important;box-shadow:none;border:1px solid #cbd5e1}.hero p,.eyebrow{color:#334155!important}.pill{border-color:#cbd5e1;background:white;color:#14213d}.stats{gap:8px}.stat,.module{box-shadow:none;break-inside:avoid}.schedule{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><div class="logo">▦</div><span>Agenda da Turma</span></div>
+    <div class="top-actions">
+      <button class="btn" id="printBtn">↗ Imprimir / PDF</button>
+      <button class="btn primary" id="todayBtn">⌖ Ver cronograma</button>
+    </div>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Cronograma de formação</div>
+      <h1>Cronograma da Turma BR01/2026</h1>
+      <p>Todos os encontros da turma em um só lugar. Consulte as datas, organize sua rotina e acompanhe a jornada de formação.</p>
+      <div class="hero-meta">
+        <span class="pill">◷ 20 encontros de fim de semana</span>
+        <span class="pill">▣ Sábados e domingos · 08h às 17h</span>
+        <span class="pill">✓ Agosto/2026 – Março/2028</span>
+      </div>
+    </section>
+    <section class="stats" aria-label="Resumo do cronograma">
+      <div class="stat"><div class="label">Módulos</div><div class="value">20</div><div class="note">Do início à conclusão</div></div>
+      <div class="stat"><div class="label">Carga horária total</div><div class="value">320h</div><div class="note">16 horas por encontro</div></div>
+      <div class="stat"><div class="label">Formato</div><div class="value">Presencial</div><div class="note">Fim de semana</div></div>
+      <div class="stat"><div class="label">Próximo encontro</div><div class="value" id="nextDate">24 out</div><div class="note" id="nextLabel">Módulo 03 · Outubro/2026</div></div>
+    </section>
+    <div class="section-head" id="cronograma">
+      <div><h2>Encontros programados</h2><p>Consulte o calendário completo da turma.</p></div>
+    </div>
+    <div class="filters">
+      <input id="search" type="search" placeholder="Buscar mês, módulo ou observação…" aria-label="Buscar encontros">
+      <select id="monthFilter" aria-label="Filtrar por mês"><option value="">Todos os meses</option></select>
+      <select id="statusFilter" aria-label="Filtrar por situação"><option value="all">Todos os encontros</option><option value="upcoming">Próximos encontros</option><option value="past">Encontros anteriores</option></select>
+    </div>
+    <div class="schedule" id="schedule"></div>
+    <div class="empty" id="empty">Nenhum encontro encontrado. Tente outro termo ou filtro.</div>
+    <div class="notice"><span>ⓘ</span><div><strong>Importante</strong>Este é um modelo inicial de cronograma. Confirme datas, horários e observações com a coordenação da turma antes de usar como calendário oficial.</div></div>
+  </main>
+  <footer class="footer"><span>© <span id="year"></span> Agenda da Turma</span><span>Cronograma BR01/2026 · Organize-se para aprender.</span></footer>
+</div>
+<script>
+const modules = [
+[1,"Agosto/2026","08/08/2026","09/08/2026","Turma iniciando 2 semanas após a primeira"],
+[2,"Setembro/2026","19/09/2026","20/09/2026","Evita feriado de 7 de setembro"],
+[3,"Outubro/2026","24/10/2026","25/10/2026","Após período eleitoral"],
+[4,"Novembro/2026","21/11/2026","22/11/2026","Evita feriado da Proclamação da República"],
+[5,"Dezembro/2026","19/12/2026","20/12/2026","Antes do período de Natal"],
+[6,"Janeiro/2027","23/01/2027","24/01/2027","Evita início de férias e Ano Novo"],
+[7,"Fevereiro/2027","20/02/2027","21/02/2027","Após Carnaval"],
+[8,"Março/2027","20/03/2027","21/03/2027","Fim de semana intermediário"],
+[9,"Abril/2027","24/04/2027","25/04/2027","Após período de Páscoa"],
+[10,"Maio/2027","22/05/2027","23/05/2027","Evita Dia das Mães"],
+[11,"Junho/2027","19/06/2027","20/06/2027","Evita feriados religiosos"],
+[12,"Julho/2027","17/07/2027","18/07/2027","Período de férias escolares"],
+[13,"Agosto/2027","21/08/2027","22/08/2027","Fim de semana intermediário"],
+[14,"Setembro/2027","18/09/2027","19/09/2027","Evita feriado de 7 de setembro"],
+[15,"Outubro/2027","16/10/2027","17/10/2027","Evita Dia das Crianças"],
+[16,"Novembro/2027","20/11/2027","21/11/2027","Após feriados nacionais"],
+[17,"Dezembro/2027","18/12/2027","19/12/2027","Antes das festas de fim de ano"],
+[18,"Janeiro/2028","22/01/2028","23/01/2028","Período pós Ano Novo"],
+[19,"Fevereiro/2028","19/02/2028","20/02/2028","Evita Carnaval"],
+[20,"Março/2028","18/03/2028","19/03/2028","Conclusão da turma"]
+];
+const parseDate = s => {const [d,m,y]=s.split("/").map(Number);return new Date(y,m-1,d)};
+const fmt = s => {const d=parseDate(s);return new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"short"}).format(d).replace(".","")};
+const today = new Date(); today.setHours(0,0,0,0);
+const monthFilter=document.getElementById("monthFilter"), search=document.getElementById("search"), statusFilter=document.getElementById("statusFilter");
+[...new Set(modules.map(m=>m[1]))].forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m;monthFilter.appendChild(o)});
+const next=modules.find(m=>parseDate(m[2])>=today)||modules[modules.length-1];
+document.getElementById("nextDate").textContent=fmt(next[2]);
+document.getElementById("nextLabel").textContent=`Módulo ${String(next[0]).padStart(2,"0")} · ${next[1]}`;
+document.getElementById("year").textContent=new Date().getFullYear();
+function render(){
+ const q=search.value.toLocaleLowerCase("pt-BR"), mon=monthFilter.value, status=statusFilter.value;
+ const filtered=modules.filter(m=>{
+  const blob=m.join(" ").toLocaleLowerCase("pt-BR");
+  const past=parseDate(m[3])<today;
+  return (!q||blob.includes(q))&&(!mon||m[1]===mon)&&(status==="all"||(status==="past"&&past)||(status==="upcoming"&&!past));
+ });
+ document.getElementById("schedule").innerHTML=filtered.map(m=>`
+ <article class="module">
+  <div class="module-top"><div style="display:flex;gap:12px;align-items:center"><div class="number">${String(m[0]).padStart(2,"0")}</div><div><h3>${m[0]===1?"Início":m[0]===20?"Final":"Módulo "+String(m[0]).padStart(2,"0")}</h3><div class="month">${m[1]}</div></div></div><span class="hours">16 horas</span></div>
+  <div class="dates"><div class="date-box"><span>Sábado</span><strong>${m[2]}</strong></div><div class="date-box"><span>Domingo</span><strong>${m[3]}</strong></div></div>
+  <div class="module-foot"><span>✦</span><span>${m[4]}</span></div>
+ </article>`).join("");
+ document.getElementById("empty").style.display=filtered.length?"none":"block";
+}
+search.addEventListener("input",render);monthFilter.addEventListener("change",render);statusFilter.addEventListener("change",render);
+document.getElementById("printBtn").addEventListener("click",()=>window.print());
+document.getElementById("todayBtn").addEventListener("click",()=>document.getElementById("cronograma").scrollIntoView({behavior:"smooth"}));
+render();
+</script>
+</body>
+</html>
