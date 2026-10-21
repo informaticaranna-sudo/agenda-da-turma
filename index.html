@@ -90,6 +90,16 @@ dialog{border:1px solid var(--line);border-radius:22px;background:var(--paper);c
 dialog::backdrop{background:#0006}
 @media(max-width:520px){.caderno{padding:18px 14px 18px 36px}.cab h2{font-size:1.5rem}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+.acoes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.leitura{border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:120px;background:var(--paper)}
+.sub2{font-size:1.05rem;margin:16px 0 0;color:var(--wine)}
+#printArea{display:none}
+@media print{
+  @page{margin:14mm}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important}
+  body{background:#fff}
+}
 </style>
   <!-- 1) Cole dentro de <head> no index.html, antes de </head> -->
 <link rel="manifest" href="/agenda-da-turma/manifest.webmanifest">
@@ -133,6 +143,7 @@ dialog::backdrop{background:#0006}
 </div>
 
 <dialog id="dlg"><form method="dialog" id="fm"></form></dialog>
+<div id="printArea"></div>
 
 <script>
 const $=s=>document.querySelector(s);
@@ -142,12 +153,20 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 const hoje=()=>new Date().toISOString().slice(0,10);
 const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const DIAS=["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
-const CATS=[["msa","Fases MSA",16,"Fase"],["escalas","Escalas",30,"Escala"],["hinos","Hinos",480,"Hino"],["v1","Volume 1",65,"Lição"],["v2","Volume 2",50,"Lição"],["v3","Volume 3",35,"Lição"],["v4","Volume 4",22,"Lição"]];
+const ESC_NOMES=["Dó","Réb","Ré","Mib","Mi","Fá","Fá#","Sol","Láb","Lá","Sib","Si"].map(n=>n+" Maior").concat(["Dó","Dó#","Ré","Mib","Mi","Fá","Fá#","Sol","Sol#","Lá","Sib","Si"].map(n=>n+" menor"));
+const CATS=[["msa","Fases MSA",16,"Fase"],["escalas","Escalas",24,"Escala",ESC_NOMES,[["Escalas Maiores",1,12],["Escalas menores",13,24]]],["hinos","Hinos",480,"Hino"],["v1","Volume 1",65,"Lição"],["v2","Volume 2",50,"Lição"],["v3","Volume 3",35,"Lição"],["v4","Volume 4",22,"Lição"]];
+const nomeItem=(c,n)=>c[4]?c[4][n-1]:`${c[3]} ${n}`;
+const feitosDe=(a,k)=>Object.keys(a.prog).filter(x=>x.startsWith(k+"-")).length;
 const GRUPOS={MSA:["msa"],Volumes:["v1","v2","v3","v4"],Hinos:["hinos"],Escalas:["escalas"]};
 const novaAluna=(nome,email,nivel,extra={})=>({id:uid(),nome,email,instr:"Piano",nivel,tel:"",nasc:"",inicio:hoje(),mensal:"",notas:[],crono:{},metodos:"",anots:[],pagos:{},prog:{},pratica:{},...extra});
 
+function migrar(d){
+  const ids=new Set(d.alunas.map(a=>a.id));
+  d.users=d.users.filter(u=>u.role!=="aluna"||ids.has(u.alunaId)); /* remove e-mails/senhas de alunas que já foram excluídas */
+  d.alunas.forEach(a=>{a.prog=a.prog||{};Object.keys(a.prog).forEach(k=>{if(k.startsWith("escalas-")&&+k.slice(8)>24)delete a.prog[k]})});
+  return d}
 function carregar(){
-  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.users)return d}catch(e){}
+  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.users&&d.alunas)return migrar(d)}catch(e){}
   const al=[novaAluna("Beatriz Oliveira","beatriz@musica.com","Avançado"),novaAluna("Carolina Mendes","carolina@musica.com","Iniciante"),novaAluna("Maria Clara Santos","maria@musica.com","Intermediário")];
   al[0].prog={"hinos-1":1};
   return{users:[{email:"prof@musica.com",senha:"123456",nome:"Professora Ana Lima",role:"prof"},{email:"maria@musica.com",senha:"123456",nome:"Maria Clara Santos",role:"aluna",alunaId:al[2].id}],alunas:al,sel:al[0].id};
@@ -207,16 +226,17 @@ function render(){
 $("#lista").onclick=e=>{
   const s=e.target.closest("[data-s]"),d=e.target.closest("[data-d]");
   if(s){db.sel=s.dataset.s;aba=0;salvar();render()}
-  if(d){const a=db.alunas.find(x=>x.id===d.dataset.d);if(confirm(`Excluir ${a.nome} e todo o caderno dela?`)){db.alunas=db.alunas.filter(x=>x!==a);db.users=db.users.filter(u=>u.alunaId!==a.id);db.sel=db.alunas[0]?.id;salvar();render()}}
+  if(d){const a=db.alunas.find(x=>x.id===d.dataset.d);if(a&&confirm(`Excluir ${a.nome}, todo o caderno e também o e-mail e a senha de acesso cadastrados?`))removerAluna(a)}
 };
 
 const ABAS=["🧑‍🎓 1. Dados da Aluna","🏆 2. Notas","📅 3. Cronograma de Estudo","🎵 4. Anotações dos Métodos","📝 5. Anotações","💳 6. Calendário de Pagamento","📈 7. Jornada da Aprendiz"];
 function caderno(){
   const a=aluna(),c=$("#caderno");
   if(!a){c.innerHTML='<div class="cab"><h2>Caderno da Aluna</h2><p class="hint">Cadastre uma aluna para abrir o caderno.</p></div>';return}
-  c.innerHTML=`<div class="cab"><h2>🎼 Caderno da Aluna 🎼</h2><div class="sub" style="margin:4px 0">🎵 ${esc(a.nome)} • ${esc(a.instr)} • Nível ${esc(a.nivel)} 🎵</div><span class="tag">${prof()?"Modo Professora — você pode editar tudo":"Modo Aluna — você pode ver tudo e editar apenas o cronograma e as anotações"}</span></div>
+  c.innerHTML=`<div class="cab"><h2>🎼 Caderno da Aluna 🎼</h2><div class="sub" style="margin:4px 0">🎵 ${esc(a.nome)} • ${esc(a.instr)} • Nível ${esc(a.nivel)} 🎵</div><span class="tag">${prof()?"Modo Professora — você pode editar tudo":"Modo Aluna — você pode ver tudo e editar apenas o cronograma e as anotações"}</span><div class="acoes"><button class="btn" id="imp">🖨 Imprimir ficha</button><button class="btn" id="bx">⬇ Baixar ficha</button></div></div>
   <div class="tabs" role="tablist">${ABAS.map((t,i)=>`<button class="tab ${i===aba?"on":""}" role="tab" aria-selected="${i===aba}" data-t="${i}">${t}</button>`).join("")}</div><div class="sec" id="sec"></div>`;
   c.querySelector(".tabs").onclick=e=>{const t=e.target.closest("[data-t]");if(t){aba=+t.dataset.t;caderno()}};
+  $("#imp").onclick=()=>imprimir(a);$("#bx").onclick=()=>baixar(a);
   [dados,notas,crono,metodos,anots,pagto,jornada][aba](a,$("#sec"));
 }
 const cabec=(t,s)=>`<h3>${t}</h3><p class="hint">${s}</p>`;
@@ -249,7 +269,7 @@ function crono(a,el){
 }
 function metodos(a,el){
   const ro=!prof();
-  el.innerHTML=cabec("🎵 Anotações dos Métodos","Observações sobre MSA, volumes e outros métodos."+(ro?" (somente leitura)":""))+`<label for="m" class="hide">Anotações</label><textarea id="m" style="min-height:240px" ${ro?"disabled":""}>${esc(a.metodos)}</textarea>${ro?"":'<p><button class="pri" id="sv">Salvar</button> <span class="hint" id="ok"></span></p>'}`;
+  el.innerHTML=cabec("🎵 Anotações dos Métodos","Observações sobre MSA, volumes e outros métodos."+(ro?" (somente leitura)":""))+`${ro?`<div class="leitura">${esc(a.metodos).replace(/\n/g,"<br>")||'<span class="hint">A professora ainda não escreveu anotações dos métodos.</span>'}</div>`:`<label for="m" class="hide">Anotações</label><textarea id="m" style="min-height:240px">${esc(a.metodos)}</textarea>`}${ro?"":'<p><button class="pri" id="sv">Salvar</button> <span class="hint" id="ok"></span></p>'}`;
   if(!ro)$("#sv").onclick=()=>{if(!prof())return;a.metodos=$("#m").value;salvar();$("#ok").textContent="Salvo."};
 }
 function anots(a,el){
@@ -275,10 +295,7 @@ function jornada(a,el){
   ${ro?"":'<p><button class="pri sm" id="pr">+ Registrar prática de hoje</button></p>'}
   <div class="chips" id="fl">${["Todos",...Object.keys(GRUPOS)].map(g=>`<button class="chip ${g===filtro?"on":""}" data-f="${g}">${g}</button>`).join("")}<input id="bs" type="search" placeholder="Buscar item..." value="${esc(busca)}" style="max-width:200px" aria-label="Buscar item"></div>
   <div class="chips">${[["Todos",all,tot],...CATS.map(c=>[c[1],feitos(c[0]),c[2]])].map(x=>`<span class="mini">${x[0]}<br><span class="mono">${Math.round(x[1]/x[2]*100)}%</span></span>`).join("")}</div>
-  <div id="det">${vis.map(c=>{
-    let ids=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>!busca||`${c[3]} ${n}`.toLowerCase().includes(busca.toLowerCase()));
-    const lim=limite[c[0]]||(busca?500:48),mais=ids.length>lim;ids=ids.slice(0,lim);
-    return`<h3 style="font-size:1.1rem;margin-top:18px">${c[1]} <small class="mono" style="color:var(--mute)">${feitos(c[0])}/${c[2]}</small></h3><div class="itens">${ids.map(n=>`<label class="it ${a.prog[c[0]+"-"+n]?"ok":""}"><input type="checkbox" data-p="${c[0]}-${n}" ${a.prog[c[0]+"-"+n]?"checked":""} ${ro?"disabled":""}>${c[3]} ${n}</label>`).join("")||'<small class="hint">Nenhum item encontrado.</small>'}</div>${mais?`<p><button class="btn" data-m="${c[0]}">Mostrar mais</button></p>`:""}`}).join("")}</div>`;
+  <div id="det">${vis.map(c=>bloco(c,a,ro)).join("")}</div>`;
   $("#vd").onclick=()=>$("#det").scrollIntoView();
   if(!ro)$("#pr").onclick=()=>{if(!prof())return;a.pratica[hoje()]=prat+1;salvar();caderno()};
   $("#bs").oninput=e=>{busca=e.target.value;const p=e.target.selectionStart;jornada(a,el);const b=$("#bs");b.focus();b.setSelectionRange(p,p)};
@@ -286,6 +303,57 @@ function jornada(a,el){
     if(f){filtro=f.dataset.f;jornada(a,el)}
     if(m){limite[m.dataset.m]=9999;jornada(a,el)}
     if(p&&prof()){if(p.checked)a.prog[p.dataset.p]=1;else delete a.prog[p.dataset.p];salvar();const y=scrollY;jornada(a,el);scrollTo(0,y)}};
+}
+
+function removerAluna(a){
+  const em=(a.email||"").trim().toLowerCase();
+  db.alunas=db.alunas.filter(x=>x.id!==a.id);
+  db.users=db.users.filter(u=>!(u.role==="aluna"&&(u.alunaId===a.id||u.email.trim().toLowerCase()===em)));
+  if($("#em").value.trim().toLowerCase()===em){$("#em").value="";$("#sn").value=""}
+  db.sel=db.alunas[0]?.id;salvar();render();
+}
+
+function bloco(c,a,ro){
+  const q=busca.toLowerCase(),feito=n=>a.prog[c[0]+"-"+n];
+  const item=n=>`<label class="it ${feito(n)?"ok":""}"><input type="checkbox" data-p="${c[0]}-${n}" ${feito(n)?"checked":""} ${ro?"disabled":""}>${esc(nomeItem(c,n))}</label>`;
+  const vazio='<small class="hint">Nenhum item encontrado.</small>';
+  let ids=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>!busca||nomeItem(c,n).toLowerCase().includes(q));
+  const lim=limite[c[0]]||(busca?500:48),mais=ids.length>lim;ids=ids.slice(0,lim);
+  let corpo;
+  if(c[5])corpo=c[5].map(g=>{const l=ids.filter(n=>n>=g[1]&&n<=g[2]);return l.length?`<h4 class="sub2">${g[0]}</h4><div class="itens">${l.map(item).join("")}</div>`:""}).join("")||vazio;
+  else corpo=`<div class="itens">${ids.map(item).join("")||vazio}</div>`;
+  return`<h3 style="font-size:1.1rem;margin-top:18px">${c[1]} <small class="mono" style="color:var(--mute)">${feitosDe(a,c[0])}/${c[2]}</small></h3>${corpo}${mais?`<p><button class="btn" data-m="${c[0]}">Mostrar mais</button></p>`:""}`;
+}
+
+/* ---------- ficha: imprimir / baixar ---------- */
+const FICHA_CSS=`.fch{font:14px/1.5 "DM Sans",Arial,sans-serif;color:#222;max-width:800px;margin:0 auto}.fch h1{font:700 22px Georgia,serif;text-align:center;margin:0 0 4px;color:#7a1a30}.fch .s{text-align:center;color:#666;margin:0 0 14px}.fch h2{font:700 16px Georgia,serif;color:#7a1a30;border-bottom:1px solid #bbb;padding-bottom:3px;margin:18px 0 8px;break-after:avoid}.fch table{width:100%;border-collapse:collapse}.fch td,.fch th{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}.fch th{background:#f3f3f3}.fch .k{width:32%;background:#f3f3f3;font-weight:700}.fch p{margin:4px 0}.fch .nota{padding:6px 0;border-bottom:1px dotted #ccc;break-inside:avoid}.fch small{color:#666}.fch .ok{color:#7a1a30;font-weight:700}`;
+function fichaCorpo(a){
+  const d=s=>s?String(s).split("-").reverse().join("/"):"",v=s=>esc(s)||"—",ano=new Date().getFullYear();
+  const med=a.notas.length?(a.notas.reduce((s,n)=>s+ +n.nota,0)/a.notas.length).toFixed(1):"—";
+  const tot=CATS.reduce((s,c)=>s+c[2],0),all=Object.keys(a.prog).length,pct=Math.round(all/tot*100);
+  const dados=[["Nome",a.nome],["E-mail",a.email],["Instrumento",a.instr],["Nível",a.nivel],["Telefone / WhatsApp",a.tel],["Nascimento",d(a.nasc)],["Início das aulas",d(a.inicio)]];
+  return`<div class="fch"><h1>🎼 Caderno da Aluna</h1><p class="s">${esc(a.nome)} • ${esc(a.instr)} • Nível ${esc(a.nivel)}<br>Emitido em ${d(hoje())}</p>
+<h2>1. Dados da Aluna</h2><table>${dados.map(r=>`<tr><td class="k">${r[0]}</td><td>${v(r[1])}</td></tr>`).join("")}</table>
+<h2>2. Notas</h2>${a.notas.length?`<p>Média atual: <b>${med}</b></p><table><tr><th>Data</th><th>Conteúdo</th><th>Nota</th></tr>${a.notas.map(n=>`<tr><td>${d(n.data)}</td><td>${esc(n.titulo)}</td><td>${esc(n.nota)}</td></tr>`).join("")}</table>`:"<p>Nenhuma nota lançada.</p>"}
+<h2>3. Cronograma de Estudo</h2><table>${DIAS.map(x=>`<tr><td class="k">${x}</td><td>${esc(a.crono[x]||"").replace(/\n/g,"<br>")||"—"}</td></tr>`).join("")}</table>
+<h2>4. Anotações dos Métodos</h2><p>${esc(a.metodos).replace(/\n/g,"<br>")||"—"}</p>
+<h2>5. Anotações</h2>${a.anots.length?a.anots.map(n=>`<div class="nota"><small>${d(n.data)} • ${esc(n.autor)}</small><br>${esc(n.txt).replace(/\n/g,"<br>")}</div>`).join(""):"<p>Sem anotações.</p>"}
+<h2>6. Calendário de Pagamento — ${ano}</h2><p>Mensalidade: <b>${a.mensal?"R$ "+esc(a.mensal):"—"}</b></p><table><tr>${MESES.map((m,i)=>{const p=a.pagos[ano+"-"+i];return`<td>${m}<br><span class="${p?"ok":""}">${p?"Pago ✓":"Pendente"}</span></td>`+(i%4===3&&i<11?"</tr><tr>":"")}).join("")}</tr></table>
+<h2>7. Jornada da Aprendiz</h2><p>Progresso geral: <b>${pct}%</b> (${all} de ${tot} itens concluídos)</p>${CATS.map(c=>{const ok=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>a.prog[c[0]+"-"+n]).map(n=>nomeItem(c,n));return`<p><b>${c[1]}</b> — ${ok.length}/${c[2]}<br><small>${ok.length?esc(ok.join(", ")):"nenhum concluído"}</small></p>`}).join("")}</div>`;
+}
+function imprimir(a){
+  const p=$("#printArea"),t=document.title;
+  p.innerHTML=`<style>${FICHA_CSS}</style>`+fichaCorpo(a);
+  document.title=`Ficha - ${a.nome}`; /* nome sugerido ao salvar como PDF */
+  const fim=()=>{document.title=t;p.innerHTML="";window.removeEventListener("afterprint",fim)};
+  window.addEventListener("afterprint",fim);
+  window.print();
+}
+function baixar(a){
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ficha - ${esc(a.nome)}</title><style>body{margin:24px}${FICHA_CSS}@media print{body{margin:0}}</style></head><body>${fichaCorpo(a)}</body></html>`;
+  const url=URL.createObjectURL(new Blob([html],{type:"text/html;charset=utf-8"})),l=document.createElement("a");
+  l.href=url;l.download="ficha-"+a.nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".html";
+  document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 </script>
   <!-- 2) Cole antes de </body>, no fim do index.html -->
