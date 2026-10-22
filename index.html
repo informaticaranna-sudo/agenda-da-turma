@@ -148,10 +148,16 @@ const dataItem=v=>typeof v==="string"&&v?dBR(v):"sem data";
 const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const DIAS=["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
 const ESC_NOMES=["Dó","Réb","Ré","Mib","Mi","Fá","Fá#","Sol","Láb","Lá","Sib","Si"].map(n=>n+" Maior").concat(["Dó","Dó#","Ré","Mib","Mi","Fá","Fá#","Sol","Sol#","Lá","Sib","Si"].map(n=>n+" menor"));
-const CATS=[["msa","Fases MSA",16,"Fase"],["escalas","Escalas",24,"Escala",ESC_NOMES,[["Escalas Maiores",1,12],["Escalas menores",13,24]]],["hinos","Hinos",480,"Hino"],["v1","Volume 1",65,"Lição"],["v2","Volume 2",50,"Lição"],["v3","Volume 3",35,"Lição"],["v4","Volume 4",22,"Lição"]];
+/* volumes: exercícios + estudos (+ hinos avulsos no Volume 1) */
+const volItens=(ex,es,hs=[])=>({
+  nomes:[...Array.from({length:ex},(_,i)=>`Exercício ${i+1}`),...Array.from({length:es},(_,i)=>`Estudo ${i+1}`),...hs.map(h=>`Hino ${h}`)],
+  grupos:[["Exercícios",1,ex],["Estudos",ex+1,ex+es],...(hs.length?[["Hinos",ex+es+1,ex+es+hs.length]]:[])],
+  total:ex+es+hs.length});
+const V1=volItens(22,40,[131,158,468]),V2=volItens(20,30),V3=volItens(10,25),V4=volItens(10,12);
+const CATS=[["msa","Fases MSA",16,"Fase"],["escalas","Escalas",24,"Escala",ESC_NOMES,[["Escalas Maiores",1,12],["Escalas menores",13,24]]],["hinos","Hinos",480,"Hino"],["coros","Coros",5,"Coro"],["v1","Volume 1",V1.total,"Item",V1.nomes,V1.grupos],["v2","Volume 2",V2.total,"Item",V2.nomes,V2.grupos],["v3","Volume 3",V3.total,"Item",V3.nomes,V3.grupos],["v4","Volume 4",V4.total,"Item",V4.nomes,V4.grupos]];
 const nomeItem=(c,n)=>c[4]?c[4][n-1]:`${c[3]} ${n}`;
 const feitosDe=(a,k)=>Object.keys(a.prog).filter(x=>x.startsWith(k+"-")).length;
-const GRUPOS={MSA:["msa"],Volumes:["v1","v2","v3","v4"],Hinos:["hinos"],Escalas:["escalas"]};
+const GRUPOS={MSA:["msa"],Volumes:["v1","v2","v3","v4"],Hinos:["hinos","coros"],Escalas:["escalas"]};
 const novaAluna=(nome,email,nivel,extra={})=>({id:uid(),nome,email,instr:"Piano",nivel,tel:"",nasc:"",inicio:hoje(),mensal:"",notas:[],crono:{},metodos:"",anots:[],pagos:{},prog:{},pratica:{},...extra});
 
 function migrar(d){
@@ -326,7 +332,7 @@ function bloco(c,a,ro){
   const item=n=>{const v=feito(n);return`<label class="it ${v?"ok":""}"><input type="checkbox" data-p="${c[0]}-${n}" ${v?"checked":""} ${ro?"disabled":""}><span><span class="nm">${esc(nomeItem(c,n))}</span>${v?`<small>${dataItem(v)}</small>`:""}</span></label>`};
   const vazio='<small class="hint">Nenhum item encontrado.</small>';
   let ids=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>!busca||nomeItem(c,n).toLowerCase().includes(q));
-  const lim=limite[c[0]]||(busca?500:48),mais=ids.length>lim;ids=ids.slice(0,lim);
+  const lim=limite[c[0]]||(busca?500:(c[5]?70:48)),mais=ids.length>lim;ids=ids.slice(0,lim);
   let corpo;
   if(c[5])corpo=c[5].map(g=>{const l=ids.filter(n=>n>=g[1]&&n<=g[2]);return l.length?`<h4 class="sub2">${g[0]}</h4><div class="itens">${l.map(item).join("")}</div>`:""}).join("")||vazio;
   else corpo=`<div class="itens">${ids.map(item).join("")||vazio}</div>`;
