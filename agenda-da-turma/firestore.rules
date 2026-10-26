@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logado() { return request.auth != null; }
+    function temPerfil(uid) { return exists(/databases/$(database)/documents/perfis/$(uid)); }
+    function perfilDe(uid) { return get(/databases/$(database)/documents/perfis/$(uid)).data; }
+    function ehProf() { return logado() && temPerfil(request.auth.uid) && perfilDe(request.auth.uid).role == 'prof'; }
+    function ehDona(id) { return logado() && temPerfil(request.auth.uid) && perfilDe(request.auth.uid).role == 'aluna' && perfilDe(request.auth.uid).alunaId == id; }
+    function escolaExiste() { return exists(/databases/$(database)/documents/config/escola); }
+
+    // Marca que a escola já tem professora (fecha a criação de novas contas de professora)
+    match /config/escola {
+      allow read: if true;
+      allow create: if logado() && !escolaExiste();
+    }
+
+    // Quem é cada pessoa (professora ou aluna)
+    match /perfis/{uid} {
+      allow read: if logado() && (request.auth.uid == uid || ehProf());
+      allow create: if ehProf() || (logado() && request.auth.uid == uid && !escolaExiste()
+                        && request.resource.data.role == 'prof'
+                        && request.resource.data.keys().hasOnly(['role', 'nome', 'email']));
+      allow update, delete: if ehProf();
+    }
+
+    // Cadernos: a professora vê e edita tudo; a aluna vê só o dela e edita apenas cronograma e anotações
+    match /alunas/{id} {
+      allow read: if ehProf() || ehDona(id);
+      allow create, delete: if ehProf();
+      allow update: if ehProf() || (ehDona(id)
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['crono', 'anots']));
+    }
+  }
+}

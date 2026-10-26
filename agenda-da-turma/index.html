@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#b03a67">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Agenda">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Agenda da Turma — Caderno de Estudos Musicais</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎼</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff8fa;--paper:#ffffff;--soft:#fff0f4;--blush:#fde4ec;--lilac:#f1e8f7;
+  --wine:#b03a67;--wine2:#8f2c52;--line:#f0d6df;--ink:#3a2a31;--mute:#7d6a73;
+  --gold:#e9bccb;--ok:#b03a67;--shadow:0 6px 22px #b03a6717;color-scheme:light}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#fff0f4 0,#fff8fa 260px) no-repeat,var(--bg);color:var(--ink);font:16px/1.55 "DM Sans",system-ui,sans-serif;min-height:100vh}
+h1,h2,h3{font-family:"Playfair Display",Georgia,serif;color:var(--ink);margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;transition:background .2s,color .2s,box-shadow .2s,transform .1s}
+button:active{transform:scale(.98)}
+:focus-visible{outline:3px solid #e58aaa;outline-offset:2px}
+.hide{display:none!important}
+.mono{font-family:"DM Mono",ui-monospace,monospace}
+/* topo */
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 20px;background:#fffffff2;backdrop-filter:blur(8px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header h1{font-size:1.15rem;color:var(--wine2)}
+.btn{border:1.5px solid var(--wine);background:#fff;border-radius:999px;padding:8px 18px;min-height:40px;color:var(--wine);font-weight:500}
+.btn:hover{background:var(--soft)}
+.pri{background:var(--wine);color:#fff;border:1.5px solid var(--wine);border-radius:999px;padding:10px 22px;min-height:44px;font-weight:700;box-shadow:0 3px 10px #b03a6730}
+.pri:hover{background:var(--wine2);border-color:var(--wine2)}
+.pri.sm{padding:6px 16px;min-height:38px;font-size:.88rem}
+.lnk{background:none;border:0;padding:2px 4px;color:var(--wine);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.err{color:#b3261e;font-size:.9rem;margin:8px 0;min-height:1.2em;text-align:center}
+main{max-width:860px;margin:0 auto;padding:20px 14px 70px;display:grid;gap:20px}
+/* caderno com espiral */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:28px;padding:24px;position:relative;box-shadow:var(--shadow)}
+.caderno{padding-left:46px}
+.caderno::before{content:"";position:absolute;left:12px;top:30px;bottom:30px;width:16px;background:radial-gradient(ellipse 7px 12px at center,var(--gold) 98%,transparent) 0 0/16px 110px repeat-y}
+/* login */
+#login{min-height:100vh;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at 15% 10%,#fde4ec 0,transparent 45%),radial-gradient(circle at 90% 90%,#f1e8f7 0,transparent 45%)}
+#login .card{width:100%;max-width:440px;padding:36px 30px 30px 52px;box-shadow:0 14px 40px #b03a6722}
+#login h1{font-size:2rem;text-align:center;color:var(--wine2)}
+.sub{text-align:center;color:var(--mute);margin:6px 0 20px}
+label{display:block;font-weight:500;font-size:.92rem;margin:14px 0 5px;color:var(--wine2)}
+input,select,textarea{width:100%;padding:11px 15px;min-height:44px;border:1.5px solid var(--line);border-radius:16px;background:#fffdfd;transition:border-color .2s,box-shadow .2s}
+input:hover,select:hover,textarea:hover{border-color:#e5b3c4}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--wine);box-shadow:0 0 0 4px #b03a6720}
+textarea{min-height:130px;resize:vertical}
+input[type=checkbox]{accent-color:var(--wine)}
+input:disabled,select:disabled,textarea:disabled{background:#faf3f5;opacity:.9;color:var(--mute)}
+/* lista de alunas */
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.al{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:20px;padding:8px 14px;margin-top:10px;background:var(--paper);transition:border-color .2s,background .2s}
+.al:hover{border-color:#e5b3c4}
+.al.on{border:2px solid var(--wine);background:var(--soft)}
+.al .sel{flex:1;text-align:left;background:none;border:0;padding:6px 0;min-height:44px}
+.al b{display:block}.al small{color:var(--mute)}
+.x{background:none;border:0;color:var(--wine2);font-size:1.1rem;min-width:40px;min-height:40px;border-radius:12px}
+.x:hover{background:var(--blush)}
+/* caderno */
+.cab{text-align:center;margin-bottom:12px}
+.cab h2{font-size:2rem;color:var(--wine2)}
+.tag{display:inline-block;font-size:.8rem;background:var(--lilac);border-radius:999px;padding:3px 14px;color:#6a4a85;margin-top:8px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0;padding-bottom:18px;border-bottom:1px dashed #e9bccb}
+.tab,.chip{border:1.5px solid #ecc5d3;background:#fff;color:var(--wine2);border-radius:999px;padding:8px 16px;min-height:42px;font-weight:500}
+.tab:hover,.chip:hover{background:var(--soft);border-color:var(--wine)}
+.tab.on,.chip.on{background:var(--wine);color:#fff;border-color:var(--wine);box-shadow:0 3px 10px #b03a6730}
+.sec h3{font-size:1.6rem;margin-bottom:4px;color:var(--wine2)}
+.hint{color:var(--mute);margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 16px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:12px}
+.row>*{flex:1 1 140px}.row>button{flex:0 0 auto}
+table{width:100%;border-collapse:collapse}
+td,th{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--wine2);font-weight:700;background:var(--soft)}
+th:first-child{border-radius:12px 0 0 12px}th:last-child{border-radius:0 12px 12px 0}
+.dias{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.dias textarea{min-height:90px}
+.meses{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:10px}
+.mes{border:1.5px solid var(--line);border-radius:18px;padding:12px 10px;text-align:center;background:var(--paper);min-height:56px}
+.mes:not(:disabled):hover{border-color:var(--wine);background:var(--soft)}
+.mes.ok{background:var(--wine);color:#fff;border-color:var(--wine)}
+.mes:disabled{cursor:default}
+/* jornada */
+.hero{background:linear-gradient(135deg,#fde4ec,#f1e8f7);border:1px solid var(--line);color:var(--ink);border-radius:24px;padding:22px}
+.hero h3{font-size:1.2rem}
+.hero .big{font-family:"Playfair Display",serif;font-size:2.6rem;font-weight:800;line-height:1.1;color:var(--wine2)}
+.hero .btn{margin-top:12px}
+.bar{height:12px;background:#ffffffb0;border-radius:9px;margin-top:12px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#e58aaa,var(--wine));border-radius:9px;transition:width .3s}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:14px 0}
+.st{border:1px solid var(--line);border-radius:20px;padding:14px 8px;text-align:center;background:var(--soft)}
+.st b{display:block;font-size:1.25rem;color:var(--wine2)}.st small{color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;align-items:center}
+.mini{border:1px solid var(--line);background:var(--lilac);border-radius:14px;padding:5px 12px;font-size:.78rem;font-weight:700;color:#5d3f78;text-align:center}
+.itens{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+.it{display:flex;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:14px;padding:8px 12px;min-height:46px;background:var(--paper);font-size:.9rem;cursor:pointer;transition:border-color .2s,background .2s}
+.it:hover{border-color:#e5b3c4}
+.it input{width:auto;min-height:0;accent-color:var(--wine)}
+.it:has(input:disabled){cursor:default}
+.it.ok{background:var(--soft);color:var(--mute);border-color:#ecc5d3}
+.it.ok .nm{text-decoration:line-through}
+.it small{display:block;font-size:.72rem;color:var(--mute);font-family:"DM Mono",ui-monospace,monospace}
+dialog{border:1px solid var(--line);border-radius:26px;background:var(--paper);color:var(--ink);max-width:420px;width:92%;box-shadow:0 20px 60px #b03a6733;padding:24px}
+dialog::backdrop{background:#3a2a3166;backdrop-filter:blur(2px)}
+@media(max-width:520px){.caderno{padding:18px 14px 18px 36px}.cab h2{font-size:1.5rem}.card{padding:18px}header{padding:10px 14px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+.acoes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.leitura{border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;min-height:120px;background:var(--soft)}
+.sub2{font-size:1.05rem;margin:18px 0 0;color:var(--wine)}
+#printArea{display:none}
+@media print{
+  @page{margin:14mm}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important}
+  body{background:#fff}
+}
+
+#splash{min-height:100vh;display:grid;place-items:center;font:600 1.4rem "Playfair Display",Georgia,serif;color:var(--wine2)}
+.hbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.btn.sm{padding:6px 14px;min-height:38px;font-size:.88rem}
+.aviso-cfg{background:var(--lilac);border:1px solid #d9c3ea;border-radius:14px;padding:10px 14px;color:#5d3f78;font-size:.9rem}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,30px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-size:.92rem;max-width:92vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:20}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.bad{background:#b3261e}
+dialog ul{padding-left:20px;margin:8px 0}
+@media print{#toast,#splash{display:none!important}}
+</style>
+</head>
+<body>
+
+<!-- CARREGANDO -->
+<div id="splash"><div>🌸 Carregando…</div></div>
+
+<!-- LOGIN -->
+<section id="login" class="hide">
+  <div class="card caderno">
+    <h1>🌸 Agenda da Turma</h1>
+    <p class="sub">Caderno de Estudos Musicais — professora e alunas em um só lugar. 🎵</p>
+    <p class="aviso-cfg hide" id="cfg"></p>
+    <label for="em">E-mail</label><input id="em" type="email" placeholder="voce@musica.com" autocomplete="username">
+    <label for="sn">Senha</label><input id="sn" type="password" placeholder="Sua senha" autocomplete="current-password">
+    <p class="err" id="err" role="alert"></p>
+    <button class="pri" style="width:100%" id="entrar">🎵 Entrar</button>
+    <p style="text-align:center;margin:12px 0 0"><button class="lnk" id="esqueci" type="button">Esqueci minha senha</button></p>
+    <div id="criarbox" class="hide">
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0 14px">
+      <p style="text-align:center;margin:0;color:var(--mute)">Primeira vez como professora? <button class="lnk" id="criar" type="button">Criar conta</button></p>
+    </div>
+    <p style="text-align:center;margin:16px 0 0"><button class="btn hide" data-inst type="button">📲 Instalar o app</button></p>
+  </div>
+</section>
+
+<!-- APP -->
+<div id="app" class="hide">
+  <header><h1 id="tit">🎼 Agenda da Turma</h1><div class="hbtns"><button class="btn hide" data-inst type="button">📲 Instalar</button><button class="btn" id="sair" type="button">↪ Sair</button></div></header>
+  <main>
+    <section class="card hide" id="turma">
+      <div class="top"><h2 style="font-size:1.35rem">Minhas Alunas</h2><div class="hbtns"><button class="btn sm" id="impAntigo" type="button" title="Importar cadastros de um backup antigo">⬆ Importar</button><button class="pri sm" id="cad" type="button">+ Cadastrar</button></div></div><input type="file" id="arq" accept=".json,application/json" class="hide">
+      <div id="lista"></div>
+    </section>
+    <section class="card caderno" id="caderno"></section>
+  </main>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<dialog id="dlg"><form method="dialog" id="fm"></form></dialog>
+<div id="printArea"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const KEY="agendaTurma.v1";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const hoje=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const dBR=s=>s?String(s).split("-").reverse().join("/"):"";
+const dataItem=v=>typeof v==="string"&&v?dBR(v):"sem data";
+const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const DIAS=["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
+const ESC_NOMES=["Dó","Réb","Ré","Mib","Mi","Fá","Fá#","Sol","Láb","Lá","Sib","Si"].map(n=>n+" Maior").concat(["Dó","Dó#","Ré","Mib","Mi","Fá","Fá#","Sol","Sol#","Lá","Sib","Si"].map(n=>n+" menor"));
+/* volumes: exercícios + estudos (+ hinos avulsos no Volume 1) */
+const volItens=(ex,es,hs=[])=>({
+  nomes:[...Array.from({length:ex},(_,i)=>`Exercício ${i+1}`),...Array.from({length:es},(_,i)=>`Estudo ${i+1}`),...hs.map(h=>`Hino ${h}`)],
+  grupos:[["Exercícios",1,ex],["Estudos",ex+1,ex+es],...(hs.length?[["Hinos",ex+es+1,ex+es+hs.length]]:[])],
+  total:ex+es+hs.length});
+const V1=volItens(22,40,[131,158,468]),V2=volItens(20,30),V3=volItens(10,25),V4=volItens(10,12);
+const CATS=[["msa","Fases MSA",16,"Fase"],["escalas","Escalas",24,"Escala",ESC_NOMES,[["Escalas Maiores",1,12],["Escalas menores",13,24]]],["hinos","Hinos",480,"Hino"],["coros","Coros",5,"Coro"],["v1","Volume 1",V1.total,"Item",V1.nomes,V1.grupos],["v2","Volume 2",V2.total,"Item",V2.nomes,V2.grupos],["v3","Volume 3",V3.total,"Item",V3.nomes,V3.grupos],["v4","Volume 4",V4.total,"Item",V4.nomes,V4.grupos]];
+const nomeItem=(c,n)=>c[4]?c[4][n-1]:`${c[3]} ${n}`;
+const feitosDe=(a,k)=>Object.keys(a.prog).filter(x=>x.startsWith(k+"-")).length;
+const GRUPOS={MSA:["msa"],Volumes:["v1","v2","v3","v4"],Hinos:["hinos","coros"],Escalas:["escalas"]};
+const novaAluna=(nome,email,nivel,extra={})=>({id:uid(),nome,email,instr:"Piano",nivel,tel:"",nasc:"",inicio:hoje(),mensal:"",notas:[],crono:{},metodos:"",anots:[],pagos:{},prog:{},pratica:{},...extra});
+
+const limpar=a=>{a.prog=a.prog||{};a.notas=a.notas||[];a.anots=a.anots||[];a.crono=a.crono||{};a.pagos=a.pagos||{};a.metodos=a.metodos||"";Object.keys(a.prog).forEach(k=>{if(k.startsWith("escalas-")&&+k.slice(8)>24)delete a.prog[k]});return a};
+/* ---------- estado (os dados ficam no banco online; aqui é só uma cópia em memória) ---------- */
+let db={alunas:[],sel:null},user=null,aba=0,filtro="Todos",busca="",limite={},nuvem=null,pronto=false,unsub=null,travaAuth=false;
+const prof=()=>user&&user.role==="prof";
+const aluna=()=>db.alunas.find(a=>a.id===(prof()?db.sel:user.alunaId));
+const guardarSel=()=>{try{localStorage.setItem("agendaTurma.sel",db.sel||"")}catch(e){}};
+function aviso(t,erro){const e=$("#toast");e.textContent=t;e.className="show"+(erro?" bad":"");clearTimeout(aviso.t);aviso.t=setTimeout(()=>e.className="",5000)}
+const MSG={"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"E-mail ou senha incorretos.","auth/invalid-email":"E-mail inválido.","auth/too-many-requests":"Muitas tentativas. Aguarde alguns minutos e tente de novo.","auth/network-request-failed":"Sem conexão com a internet.","auth/email-already-in-use":"Este e-mail já está cadastrado.","auth/weak-password":"A senha precisa ter pelo menos 6 caracteres.","permission-denied":"Sem permissão para esta ação.","unavailable":"Sem conexão. Tente novamente em instantes."};
+const msgErro=e=>MSG[e&&e.code]||MSG[(e&&e.code||"").replace("firestore/","")]||(e&&e.message)||"Algo deu errado. Tente novamente.";
+/* grava a aluna no banco online (aparece em todos os aparelhos) */
+function salvar(a=aluna()){if(!a||!nuvem)return;nuvem.gravarAluna(a).catch(e=>aviso("Não foi possível salvar: "+msgErro(e),true))}
+/* recebe a lista atualizada do banco online; mantém os mesmos objetos para não perder referências */
+function aplicar(lista){
+  const ids=new Set(lista.map(a=>a.id));
+  db.alunas=db.alunas.filter(x=>ids.has(x.id));
+  lista.forEach(d=>{limpar(d);const i=db.alunas.find(x=>x.id===d.id);if(i){Object.keys(i).forEach(k=>delete i[k]);Object.assign(i,d)}else db.alunas.push(d)});
+  db.alunas.sort((x,y)=>String(x.nome).localeCompare(String(y.nome),"pt-BR"));
+}
+function aoSnap(lista,meta){
+  if(!user)return;
+  aplicar(lista);
+  if(prof()&&!db.alunas.some(a=>a.id===db.sel)){let s=null;try{s=localStorage.getItem("agendaTurma.sel")}catch(e){}db.sel=db.alunas.some(a=>a.id===s)?s:(db.alunas[0]?.id||null)}
+  if(!prof()){const a=aluna();if(a)user.nome=a.nome}
+  if(!pronto){pronto=true;mostrarApp();return}
+  if(meta&&meta.hasPendingWrites)return;                 /* mudança feita aqui mesmo: já está na tela */
+  const f=document.activeElement;
+  if(f&&/^(INPUT|TEXTAREA|SELECT)$/.test(f.tagName))return; /* não atrapalha quem está digitando */
+  if($("#dlg").open)return;
+  render();
+}
+
+/* ---------- login (Firebase Authentication) ---------- */
+const erroLogin=t=>{$("#err").textContent=t||""};
+function mostrarLogin(){
+  user=null;pronto=false;if(unsub){unsub();unsub=null}
+  db={alunas:[],sel:null};
+  $("#splash").classList.add("hide");$("#app").classList.add("hide");$("#login").classList.remove("hide");
+  $("#sn").value="";$("#entrar").disabled=false;
+  if(nuvem&&nuvem.configurado)nuvem.escolaExiste().then(x=>$("#criarbox").classList.toggle("hide",x)).catch(()=>{});
+}
+function mostrarApp(){
+  $("#splash").classList.add("hide");$("#login").classList.add("hide");$("#app").classList.remove("hide");
+  erroLogin("");aba=0;render();window.scrollTo(0,0);
+}
+async function aoLogar(u){
+  if(user&&user.uid===u.uid)return;
+  try{
+    const p=await nuvem.perfil(u.uid);
+    if(!p){mostrarLogin();erroLogin("Este e-mail ainda não foi liberado nesta escola. Fale com a professora.");await nuvem.sair();return}
+    user={uid:u.uid,email:u.email,nome:p.nome,role:p.role,alunaId:p.alunaId};
+    pronto=false;
+    unsub=nuvem.ouvir(user,aoSnap,e=>aviso("Erro ao sincronizar: "+msgErro(e),true));
+  }catch(e){mostrarLogin();erroLogin(msgErro(e))}
+}
+function iniciarApp(n){
+  nuvem=n;
+  if(!n.configurado||n.erro){
+    $("#splash").classList.add("hide");$("#login").classList.remove("hide");
+    $("#cfg").textContent=n.erro?("Não foi possível carregar o banco de dados online. Verifique a internet e recarregue a página. ("+n.erro+")"):"⚙️ Falta configurar o banco de dados online. Siga o passo a passo do arquivo LEIA-ME e preencha o arquivo firebase-config.js.";
+    $("#cfg").classList.remove("hide");$("#entrar").disabled=true;return}
+  n.onAuth(u=>{if(travaAuth)return;if(u)aoLogar(u);else mostrarLogin()});
+}
+window.iniciarApp=iniciarApp;
+$("#entrar").onclick=async()=>{
+  const em=$("#em").value.trim(),sn=$("#sn").value;
+  if(!em||!sn){erroLogin("Informe e-mail e senha.");return}
+  erroLogin("");$("#entrar").disabled=true;
+  try{await nuvem.entrar(em,sn)}catch(e){erroLogin(msgErro(e))}
+  $("#entrar").disabled=false;
+};
+$("#sn").onkeydown=e=>{if(e.key==="Enter")$("#entrar").click()};
+$("#esqueci").onclick=async()=>{
+  const em=$("#em").value.trim();
+  if(!em.includes("@")){erroLogin("Digite seu e-mail acima e toque em “Esqueci minha senha” de novo.");return}
+  try{await nuvem.redefinirSenha(em);erroLogin("");aviso("Se este e-mail tiver cadastro, enviamos um link para criar uma nova senha.")}catch(e){erroLogin(msgErro(e))}
+};
+$("#sair").onclick=()=>nuvem.sair();
+/* botão "Instalar app" (PWA) */
+let convite=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();convite=e;document.querySelectorAll("[data-inst]").forEach(b=>b.classList.remove("hide"))});
+window.addEventListener("appinstalled",()=>{convite=null;document.querySelectorAll("[data-inst]").forEach(b=>b.classList.add("hide"))});
+document.querySelectorAll("[data-inst]").forEach(b=>b.onclick=async()=>{if(!convite)return;convite.prompt();await convite.userChoice;convite=null;document.querySelectorAll("[data-inst]").forEach(x=>x.classList.add("hide"))});
+if("serviceWorker" in navigator&&location.protocol.startsWith("http"))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+
+function dialogo(html,ok,lbl){
+  $("#fm").innerHTML=html+'<p class="err" id="derr"></p><div class="row" style="margin-top:14px"><button type="button" class="btn" id="dx">Cancelar</button><button type="button" class="pri" id="dok">'+(lbl||"Salvar")+'</button></div>';
+  const d=$("#dlg");d.style.maxWidth="";d.showModal();$("#dx").onclick=()=>d.close();
+  $("#dok").onclick=async()=>{const b=$("#dok"),v=Object.fromEntries([...$("#fm").elements].filter(e=>e.name).map(e=>[e.name,e.value.trim()]));b.disabled=true;let r;try{r=await ok(v)}catch(e){r=msgErro(e)}b.disabled=false;if(r)$("#derr").textContent=r;else d.close()};
+}
+$("#criar").onclick=()=>dialogo('<h3>Criar conta da professora</h3><p class="hint">A primeira conta criada passa a ser a professora da escola. Depois disso, só ela cadastra as alunas.</p><label>Nome</label><input name="nome"><label>E-mail</label><input name="email" type="email" autocomplete="username"><label>Senha (mín. 6 caracteres)</label><input name="senha" type="password" autocomplete="new-password">',async v=>{
+  if(!v.nome||!v.email.includes("@"))return"Informe nome e um e-mail válido.";
+  if(v.senha.length<6)return"A senha precisa ter pelo menos 6 caracteres.";
+  travaAuth=true;
+  try{await nuvem.criarProfessora(v)}catch(e){travaAuth=false;throw e}
+  travaAuth=false;const u=nuvem.usuarioAtual();if(u)aoLogar(u);
+},"Criar conta");
+$("#cad").onclick=()=>dialogo('<h3>Cadastrar aluna</h3><label>Nome completo</label><input name="nome"><label>E-mail (será o login)</label><input name="email" type="email"><label>Instrumento</label><input name="instr" value="Piano"><label>Nível</label><select name="nivel"><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select><label>Senha de acesso da aluna (mín. 6 caracteres)</label><input name="senha" type="text" autocomplete="off">',async v=>{
+  if(!v.nome||!v.email.includes("@"))return"Informe nome e um e-mail válido.";
+  if((v.senha||"").length<6)return"A senha precisa ter pelo menos 6 caracteres.";
+  if(db.alunas.some(x=>(x.email||"").trim().toLowerCase()===v.email.toLowerCase()))return"Já existe uma aluna com este e-mail.";
+  const a=novaAluna(v.nome,v.email,v.nivel,{instr:v.instr||"Piano"});
+  a.uid=await nuvem.criarLogin(v.email,v.senha);
+  await nuvem.criarAluna(a,{role:"aluna",nome:a.nome,email:a.email,alunaId:a.id});
+  if(!db.alunas.some(x=>x.id===a.id))db.alunas.push(limpar(a));
+  db.sel=a.id;guardarSel();render();
+});
+/* importar cadastros antigos (arquivo gerado por exportar-cadastros.html) */
+$("#impAntigo").onclick=()=>$("#arq").click();
+$("#arq").onchange=async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  let d;try{d=JSON.parse(await f.text())}catch(x){aviso("Arquivo inválido.",true);return}
+  if(!d||!Array.isArray(d.alunas)){aviso("Este arquivo não parece ser um backup da Agenda.",true);return}
+  importar(d);
+};
+async function importar(d){
+  const rel=[];let n=0;aviso("Importando… aguarde.");
+  for(const o of d.alunas){
+    const a=limpar({...novaAluna(o.nome,o.email,o.nivel),...o}),mail=String(a.email||"").trim();
+    if(!mail.includes("@")){rel.push(`${a.nome}: sem e-mail válido — ignorada`);continue}
+    if(db.alunas.some(x=>(x.email||"").trim().toLowerCase()===mail.toLowerCase())){rel.push(`${a.nome}: já estava cadastrada — ignorada`);continue}
+    const u=(d.users||[]).find(x=>x.role==="aluna"&&x.alunaId===o.id);let senha=String(u&&u.senha||"").trim(),troca=false;
+    if(senha.length<6){senha="123456";troca=true}
+    try{
+      a.email=mail;a.uid=await nuvem.criarLogin(mail,senha);
+      await nuvem.criarAluna(a,{role:"aluna",nome:a.nome,email:mail,alunaId:a.id});
+      if(!db.alunas.some(x=>x.id===a.id))db.alunas.push(a);
+      n++;if(troca)rel.push(`${a.nome}: senha provisória 123456`);
+    }catch(e){rel.push(`${a.nome}: ${msgErro(e)}`)}
+  }
+  db.alunas.sort((x,y)=>String(x.nome).localeCompare(String(y.nome),"pt-BR"));
+  if(!db.sel)db.sel=db.alunas[0]?.id||null;
+  render();
+  $("#fm").innerHTML=`<h3>✅ Importação concluída</h3><p class="hint">${n} aluna(s) importada(s) para o banco online. As alunas continuam entrando com o mesmo e-mail e a mesma senha de antes.</p>${rel.length?`<ul>${rel.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>`:""}<div class="row" style="margin-top:14px;justify-content:flex-end"><button type="button" class="pri" id="dx">Fechar</button></div>`;
+  const dl=$("#dlg");dl.style.maxWidth="";dl.showModal();$("#dx").onclick=()=>dl.close();
+}
+
+/* ---------- render ---------- */
+function render(){
+  $("#tit").textContent=prof()?`🎼 Agenda da Turma — ${user.nome}`:`🎼 Caderno de ${user.nome.split(" ")[0]}`;
+  $("#turma").classList.toggle("hide",!prof());
+  if(prof())$("#lista").innerHTML=db.alunas.length?db.alunas.map(a=>`<div class="al ${a.id===db.sel?"on":""}"><button class="sel" data-s="${a.id}"><b>${esc(a.nome)}</b><small>${esc(a.instr)} • ${esc(a.nivel)} • ${esc(a.email)}</small></button><button class="x" data-d="${a.id}" aria-label="Excluir ${esc(a.nome)}">🗑</button></div>`).join(""):'<p class="hint">Nenhuma aluna ainda. Use “Cadastrar” para adicionar a primeira.</p>';
+  caderno();
+}
+$("#lista").onclick=e=>{
+  const s=e.target.closest("[data-s]"),d=e.target.closest("[data-d]");
+  if(s){db.sel=s.dataset.s;aba=0;guardarSel();render()}
+  if(d){const a=db.alunas.find(x=>x.id===d.dataset.d);if(a&&confirm(`Excluir ${a.nome} e todo o caderno dela? Esta ação não pode ser desfeita.`))removerAluna(a)}
+};
+
+const ABAS=["🧑‍🎓 1. Dados da Aluna","🏆 2. Notas","📅 3. Cronograma de Estudo","🎵 4. Anotações dos Métodos","📝 5. Anotações","💳 6. Calendário de Pagamento","📈 7. Jornada da Aprendiz"];
+function caderno(){
+  const a=aluna(),c=$("#caderno");
+  if(!a){c.innerHTML='<div class="cab"><h2>Caderno da Aluna</h2><p class="hint">Cadastre uma aluna para abrir o caderno.</p></div>';return}
+  c.innerHTML=`<div class="cab"><h2>🎼 Caderno da Aluna 🎼</h2><div class="sub" style="margin:4px 0">🎵 ${esc(a.nome)} • ${esc(a.instr)} • Nível ${esc(a.nivel)} 🎵</div><span class="tag">${prof()?"Modo Professora — você pode editar tudo":"Modo Aluna — você pode ver tudo e editar apenas o cronograma e as anotações"}</span><div class="acoes"><button class="btn" id="imp">🖨 Imprimir ficha</button><button class="btn" id="bx">⬇ Baixar ficha</button></div></div>
+  <div class="tabs" role="tablist">${ABAS.map((t,i)=>`<button class="tab ${i===aba?"on":""}" role="tab" aria-selected="${i===aba}" data-t="${i}">${t}</button>`).join("")}</div><div class="sec" id="sec"></div>`;
+  c.querySelector(".tabs").onclick=e=>{const t=e.target.closest("[data-t]");if(t){aba=+t.dataset.t;caderno()}};
+  $("#imp").onclick=()=>imprimir(a);$("#bx").onclick=()=>baixar(a);
+  [dados,notas,crono,metodos,anots,pagto,jornada][aba](a,$("#sec"));
+}
+const cabec=(t,s)=>`<h3>${t}</h3><p class="hint">${s}</p>`;
+
+function dados(a,el){
+  const ro=prof()?"":"disabled";
+  const f=(k,l,t="text",lk=false)=>`<div><label for="f${k}">${l}</label><input id="f${k}" data-k="${k}" type="${t}" value="${esc(a[k])}" ${ro||(lk?"disabled":"")}></div>`;
+  el.innerHTML=cabec("🧑‍🎓 Dados da Aluna","Cadastro completo — edite e salve.")+`<div class="grid">${f("nome","Nome completo")}${f("email","E-mail de acesso (não pode ser alterado)","email",true)}${f("instr","Instrumento")}<div><label for="fnivel">Nível</label><select id="fnivel" data-k="nivel" ${ro}>${["Iniciante","Intermediário","Avançado"].map(n=>`<option ${n===a.nivel?"selected":""}>${n}</option>`).join("")}</select></div>${f("tel","Telefone / WhatsApp","tel")}${f("nasc","Nascimento","date")}${f("inicio","Início das aulas","date")}${prof()?`<div><label>Senha de acesso da aluna</label><button type="button" class="btn" id="rs">✉ Enviar link para criar nova senha</button></div>`:""}</div>${prof()?'<p><button class="pri" id="sv">Salvar dados</button> <span id="ok" class="hint"></span></p>':""}`;
+  if(prof()){
+    $("#sv").onclick=()=>{
+      el.querySelectorAll("[data-k]").forEach(i=>{if(!i.disabled)a[i.dataset.k]=i.value.trim()});
+      salvar(a);render();$("#ok").textContent="Dados salvos."};
+    $("#rs").onclick=async()=>{try{await nuvem.redefinirSenha(a.email);aviso("Link enviado para "+a.email)}catch(e){aviso(msgErro(e),true)}};
+  }
+}
+
+function notas(a,el){
+  const ro=!prof();
+  const med=a.notas.length?(a.notas.reduce((s,n)=>s+ +n.nota,0)/a.notas.length).toFixed(1):"—";
+  el.innerHTML=cabec("🏆 Notas",`Avaliações das aulas e peças. Média atual: <b class="mono">${med}</b>`)+(ro?"":`<div class="row"><div><label>Data</label><input type="date" id="nd" value="${hoje()}"></div><div><label>Peça / conteúdo</label><input id="nt"></div><div><label>Nota (0–10)</label><input id="nn" type="number" min="0" max="10" step="0.5"></div><button class="pri" id="na">Adicionar</button></div>`)+
+  (a.notas.length?`<table><tr><th>Data</th><th>Conteúdo</th><th>Nota</th><th></th></tr>${a.notas.map((n,i)=>`<tr><td>${esc(n.data)}</td><td>${esc(n.titulo)}</td><td class="mono">${esc(n.nota)}</td><td>${ro?"":`<button class="x" data-r="${i}" aria-label="Remover nota">🗑</button>`}</td></tr>`).join("")}</table>`:'<p class="hint">Nenhuma nota lançada ainda.</p>');
+  if(!ro){$("#na").onclick=()=>{if(!$("#nt").value.trim()||$("#nn").value==="")return;a.notas.push({data:$("#nd").value,titulo:$("#nt").value.trim(),nota:$("#nn").value});salvar();caderno()};
+  el.onclick=e=>{const r=e.target.closest("[data-r]");if(r){a.notas.splice(+r.dataset.r,1);salvar();caderno()}}}
+}
+
+function crono(a,el){
+  el.innerHTML=cabec("📅 Cronograma de Estudo","O que estudar em cada dia da semana.")+`<div class="dias">${DIAS.map(d=>`<div><label for="c${d}">${d}</label><textarea id="c${d}" data-d="${d}" placeholder="Ex.: escalas 15 min + hino 12">${esc(a.crono[d]||"")}</textarea></div>`).join("")}</div><p><button class="pri" id="sv">Salvar cronograma</button> <span class="hint" id="ok"></span></p>`;
+  $("#sv").onclick=()=>{el.querySelectorAll("[data-d]").forEach(t=>a.crono[t.dataset.d]=t.value);salvar();$("#ok").textContent="Salvo."};
+}
+function metodos(a,el){
+  const ro=!prof();
+  el.innerHTML=cabec("🎵 Anotações dos Métodos","Observações sobre MSA, volumes e outros métodos."+(ro?" (somente leitura)":""))+`${ro?`<div class="leitura">${esc(a.metodos).replace(/\n/g,"<br>")||'<span class="hint">A professora ainda não escreveu anotações dos métodos.</span>'}</div>`:`<label for="m" class="hide">Anotações</label><textarea id="m" style="min-height:240px">${esc(a.metodos)}</textarea>`}${ro?"":'<p><button class="pri" id="sv">Salvar</button> <span class="hint" id="ok"></span></p>'}`;
+  if(!ro)$("#sv").onclick=()=>{if(!prof())return;a.metodos=$("#m").value;salvar();$("#ok").textContent="Salvo."};
+}
+function anots(a,el){
+  el.innerHTML=cabec("📝 Anotações","Recados e observações datadas entre aula e casa.")+`<textarea id="an" placeholder="Escreva uma anotação..." style="min-height:90px"></textarea><p><button class="pri" id="aa">Adicionar anotação</button></p>`+(a.anots.length?a.anots.map((n,i)=>`<div class="al" style="display:block"><small>${esc(n.data)} • ${esc(n.autor)}</small><div>${esc(n.txt).replace(/\n/g,"<br>")}</div>${prof()||n.autor===user.nome?`<button class="x" data-r="${i}">🗑 Remover</button>`:""}</div>`).join(""):'<p class="hint">Sem anotações por enquanto.</p>');
+  $("#aa").onclick=()=>{const t=$("#an").value.trim();if(!t)return;a.anots.unshift({data:hoje(),autor:user.nome,txt:t});salvar();caderno()};
+  el.onclick=e=>{const r=e.target.closest("[data-r]");if(r){a.anots.splice(+r.dataset.r,1);salvar();caderno()}};
+}
+function pagto(a,el){
+  const ano=new Date().getFullYear(),ro=!prof(),pg=MESES.filter((m,i)=>a.pagos[ano+"-"+i]).length;
+  el.innerHTML=cabec("💳 Calendário de Pagamento",`${ano} — ${pg} de 12 mensalidades pagas.`)+`<div class="row"><div><label for="vm">Valor da mensalidade (R$)</label><input id="vm" type="number" min="0" step="0.01" value="${esc(a.mensal)}" ${ro?"disabled":""}></div></div><div class="meses">${MESES.map((m,i)=>{const p=a.pagos[ano+"-"+i];return`<button class="mes ${p?"ok":""}" data-m="${ano}-${i}" ${ro?"disabled":""}><b>${m}</b><br><small>${p?"Pago ✓":"Pendente"}</small></button>`}).join("")}</div>`;
+  if(!ro){$("#vm").onchange=e=>{a.mensal=e.target.value;salvar()};el.onclick=e=>{const m=e.target.closest("[data-m]");if(m){a.pagos[m.dataset.m]=!a.pagos[m.dataset.m];salvar();caderno()}}}
+}
+
+/* ---------- jornada ---------- */
+function jornada(a,el){
+  const tot=CATS.reduce((s,c)=>s+c[2],0),feitos=k=>Object.keys(a.prog).filter(x=>x.startsWith(k+"-")).length,all=Object.keys(a.prog).length;
+  const pct=Math.round(all/tot*100),ro=!prof();
+  const vis=filtro==="Todos"?CATS:CATS.filter(c=>GRUPOS[filtro].includes(c[0]));
+  el.innerHTML=cabec("📈 Jornada da Aprendiz",ro?"Acompanhe sua evolução. Quem marca os itens concluídos é a professora (somente leitura).":"Marque cada item concluído e acompanhe a evolução da aluna.")+
+  `<div class="hero"><h3>Seu progresso geral</h3><div class="big mono">${pct}%</div><p style="margin:4px 0 0"><b>${all}</b> registro(s) de estudo concluído(s).</p><div class="bar"><i style="width:${pct}%"></i></div><button class="btn" id="vd">Ver detalhes</button></div>
+  <h3 style="font-size:1.25rem;margin-top:20px">Seu andamento</h3>
+  <div class="stats">${CATS.map(c=>`<div class="st"><b class="mono">${feitos(c[0])}/${c[2]}</b><small>${c[1].toLowerCase()}</small></div>`).join("")}</div>
+  <div class="chips" id="fl">${["Todos",...Object.keys(GRUPOS)].map(g=>`<button class="chip ${g===filtro?"on":""}" data-f="${g}">${g}</button>`).join("")}<input id="bs" type="search" placeholder="Buscar item..." value="${esc(busca)}" style="max-width:200px" aria-label="Buscar item"></div>
+  <div class="chips">${[["Todos",all,tot],...CATS.map(c=>[c[1],feitos(c[0]),c[2]])].map(x=>`<span class="mini">${x[0]}<br><span class="mono">${Math.round(x[1]/x[2]*100)}%</span></span>`).join("")}</div>
+  <div id="det">${vis.map(c=>bloco(c,a,ro)).join("")}</div>`;
+  $("#vd").onclick=()=>detalhes(a);
+  $("#bs").oninput=e=>{busca=e.target.value;const p=e.target.selectionStart;jornada(a,el);const b=$("#bs");b.focus();b.setSelectionRange(p,p)};
+  el.onclick=e=>{const f=e.target.closest("[data-f]"),m=e.target.closest("[data-m]"),p=e.target.closest("[data-p]");
+    if(f){filtro=f.dataset.f;jornada(a,el)}
+    if(m){limite[m.dataset.m]=9999;jornada(a,el)}
+    if(p&&prof()){if(p.checked)a.prog[p.dataset.p]=hoje();else delete a.prog[p.dataset.p];salvar();const y=scrollY;jornada(a,el);scrollTo(0,y)}};
+}
+
+function detalhes(a){
+  const tot=Object.keys(a.prog).length;
+  const sec=CATS.map(c=>{
+    const L=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>a.prog[c[0]+"-"+n]).map(n=>({n,v:a.prog[c[0]+"-"+n]}));
+    if(!L.length)return"";
+    const dt=x=>typeof x.v==="string"?x.v:"";
+    L.sort((x,y)=>dt(y).localeCompare(dt(x))||x.n-y.n);
+    return`<h4 class="sub2">${c[1]} <small class="mono" style="color:var(--mute)">${L.length}/${c[2]}</small></h4><table>${L.map(x=>`<tr><td>${esc(nomeItem(c,x.n))}</td><td class="mono">${dataItem(x.v)}</td></tr>`).join("")}</table>`;
+  }).join("");
+  $("#fm").innerHTML=`<h3>📈 O que já foi passado</h3><p class="hint">${esc(a.nome)} — ${tot} item(ns) concluído(s), do mais recente ao mais antigo.</p>${sec||'<p class="hint">Nenhum item foi marcado como concluído ainda.</p>'}<div class="row" style="margin-top:14px;justify-content:flex-end"><button type="button" class="pri" id="dx">Fechar</button></div>`;
+  const d=$("#dlg");d.style.maxWidth="640px";d.showModal();$("#dx").onclick=()=>d.close();
+}
+
+async function removerAluna(a){
+  try{await nuvem.excluirAluna(a)}catch(e){aviso("Não foi possível excluir: "+msgErro(e),true);return}
+  db.alunas=db.alunas.filter(x=>x.id!==a.id);
+  if(db.sel===a.id)db.sel=db.alunas[0]?.id||null;
+  guardarSel();render();
+}
+
+function bloco(c,a,ro){
+  const q=busca.toLowerCase(),feito=n=>a.prog[c[0]+"-"+n];
+  const item=n=>{const v=feito(n);return`<label class="it ${v?"ok":""}"><input type="checkbox" data-p="${c[0]}-${n}" ${v?"checked":""} ${ro?"disabled":""}><span><span class="nm">${esc(nomeItem(c,n))}</span>${v?`<small>${dataItem(v)}</small>`:""}</span></label>`};
+  const vazio='<small class="hint">Nenhum item encontrado.</small>';
+  let ids=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>!busca||nomeItem(c,n).toLowerCase().includes(q));
+  const lim=limite[c[0]]||(busca?500:(c[5]?70:48)),mais=ids.length>lim;ids=ids.slice(0,lim);
+  let corpo;
+  if(c[5])corpo=c[5].map(g=>{const l=ids.filter(n=>n>=g[1]&&n<=g[2]);return l.length?`<h4 class="sub2">${g[0]}</h4><div class="itens">${l.map(item).join("")}</div>`:""}).join("")||vazio;
+  else corpo=`<div class="itens">${ids.map(item).join("")||vazio}</div>`;
+  return`<h3 style="font-size:1.1rem;margin-top:18px">${c[1]} <small class="mono" style="color:var(--mute)">${feitosDe(a,c[0])}/${c[2]}</small></h3>${corpo}${mais?`<p><button class="btn" data-m="${c[0]}">Mostrar mais</button></p>`:""}`;
+}
+
+/* ---------- ficha: imprimir / baixar ---------- */
+const FICHA_CSS=`.fch{font:14px/1.5 "DM Sans",Arial,sans-serif;color:#222;max-width:800px;margin:0 auto}.fch h1{font:700 22px Georgia,serif;text-align:center;margin:0 0 4px;color:#b03a67}.fch .s{text-align:center;color:#666;margin:0 0 14px}.fch h2{font:700 16px Georgia,serif;color:#b03a67;border-bottom:1px solid #bbb;padding-bottom:3px;margin:18px 0 8px;break-after:avoid}.fch table{width:100%;border-collapse:collapse}.fch td,.fch th{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}.fch th{background:#fdeff3}.fch .k{width:32%;background:#fdeff3;font-weight:700}.fch p{margin:4px 0}.fch .nota{padding:6px 0;border-bottom:1px dotted #ccc;break-inside:avoid}.fch small{color:#666}.fch .ok{color:#b03a67;font-weight:700}`;
+function fichaCorpo(a){
+  const d=s=>s?String(s).split("-").reverse().join("/"):"",v=s=>esc(s)||"—",ano=new Date().getFullYear();
+  const med=a.notas.length?(a.notas.reduce((s,n)=>s+ +n.nota,0)/a.notas.length).toFixed(1):"—";
+  const tot=CATS.reduce((s,c)=>s+c[2],0),all=Object.keys(a.prog).length,pct=Math.round(all/tot*100);
+  const dados=[["Nome",a.nome],["E-mail",a.email],["Instrumento",a.instr],["Nível",a.nivel],["Telefone / WhatsApp",a.tel],["Nascimento",d(a.nasc)],["Início das aulas",d(a.inicio)]];
+  return`<div class="fch"><h1>🎼 Caderno da Aluna</h1><p class="s">${esc(a.nome)} • ${esc(a.instr)} • Nível ${esc(a.nivel)}<br>Emitido em ${d(hoje())}</p>
+<h2>1. Dados da Aluna</h2><table>${dados.map(r=>`<tr><td class="k">${r[0]}</td><td>${v(r[1])}</td></tr>`).join("")}</table>
+<h2>2. Notas</h2>${a.notas.length?`<p>Média atual: <b>${med}</b></p><table><tr><th>Data</th><th>Conteúdo</th><th>Nota</th></tr>${a.notas.map(n=>`<tr><td>${d(n.data)}</td><td>${esc(n.titulo)}</td><td>${esc(n.nota)}</td></tr>`).join("")}</table>`:"<p>Nenhuma nota lançada.</p>"}
+<h2>3. Cronograma de Estudo</h2><table>${DIAS.map(x=>`<tr><td class="k">${x}</td><td>${esc(a.crono[x]||"").replace(/\n/g,"<br>")||"—"}</td></tr>`).join("")}</table>
+<h2>4. Anotações dos Métodos</h2><p>${esc(a.metodos).replace(/\n/g,"<br>")||"—"}</p>
+<h2>5. Anotações</h2>${a.anots.length?a.anots.map(n=>`<div class="nota"><small>${d(n.data)} • ${esc(n.autor)}</small><br>${esc(n.txt).replace(/\n/g,"<br>")}</div>`).join(""):"<p>Sem anotações.</p>"}
+<h2>6. Calendário de Pagamento — ${ano}</h2><p>Mensalidade: <b>${a.mensal?"R$ "+esc(a.mensal):"—"}</b></p><table><tr>${MESES.map((m,i)=>{const p=a.pagos[ano+"-"+i];return`<td>${m}<br><span class="${p?"ok":""}">${p?"Pago ✓":"Pendente"}</span></td>`+(i%4===3&&i<11?"</tr><tr>":"")}).join("")}</tr></table>
+<h2>7. Jornada da Aprendiz</h2><p>Progresso geral: <b>${pct}%</b> (${all} de ${tot} itens concluídos)</p>${CATS.map(c=>{const ok=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>a.prog[c[0]+"-"+n]).map(n=>{const v=a.prog[c[0]+"-"+n];return nomeItem(c,n)+(typeof v==="string"&&v?` (${d(v)})`:"")});return`<p><b>${c[1]}</b> — ${ok.length}/${c[2]}<br><small>${ok.length?esc(ok.join(", ")):"nenhum concluído"}</small></p>`}).join("")}</div>`;
+}
+function imprimir(a){
+  const p=$("#printArea"),t=document.title;
+  p.innerHTML=`<style>${FICHA_CSS}</style>`+fichaCorpo(a);
+  document.title=`Ficha - ${a.nome}`; /* nome sugerido ao salvar como PDF */
+  const fim=()=>{document.title=t;p.innerHTML="";window.removeEventListener("afterprint",fim)};
+  window.addEventListener("afterprint",fim);
+  window.print();
+}
+function baixar(a){
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ficha - ${esc(a.nome)}</title><style>body{margin:24px}${FICHA_CSS}@media print{body{margin:0}}</style></head><body>${fichaCorpo(a)}</body></html>`;
+  const url=URL.createObjectURL(new Blob([html],{type:"text/html;charset=utf-8"})),l=document.createElement("a");
+  l.href=url;l.download="ficha-"+a.nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".html";
+  document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+</script>
+<script type="module">
+import {firebaseConfig as cfg} from "./firebase-config.js";
+const V="10.12.2",B="https://www.gstatic.com/firebasejs/"+V+"/";
+const configurado=!!(cfg&&cfg.apiKey&&cfg.projectId&&!/^COLE/i.test(cfg.apiKey));
+let nuvem={configurado};
+if(configurado){
+  try{
+    const [A,Au,F]=await Promise.all([import(B+"firebase-app.js"),import(B+"firebase-auth.js"),import(B+"firebase-firestore.js")]);
+    const app=A.initializeApp(cfg),auth=Au.getAuth(app);
+    let fs;
+    try{fs=F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})})}catch(e){fs=F.getFirestore(app)}
+    const D=(...p)=>F.doc(fs,...p),C=n=>F.collection(fs,n),limpo=o=>JSON.parse(JSON.stringify(o));
+    let auth2=null;
+    /* segunda instância só para criar logins de alunas sem desconectar a professora */
+    const sec=()=>auth2||(auth2=Au.getAuth(A.initializeApp(cfg,"cadastro")));
+    nuvem={
+      configurado:true,
+      onAuth:cb=>Au.onAuthStateChanged(auth,cb),
+      usuarioAtual:()=>auth.currentUser,
+      entrar:(e,s)=>Au.signInWithEmailAndPassword(auth,e,s),
+      sair:()=>Au.signOut(auth),
+      redefinirSenha:e=>Au.sendPasswordResetEmail(auth,e),
+      perfil:async uid=>{const s=await F.getDoc(D("perfis",uid));return s.exists()?s.data():null},
+      escolaExiste:async()=>(await F.getDoc(D("config","escola"))).exists(),
+      async criarProfessora({nome,email,senha}){
+        const c=await Au.createUserWithEmailAndPassword(auth,email,senha);
+        try{
+          const b=F.writeBatch(fs);
+          b.set(D("perfis",c.user.uid),{role:"prof",nome,email});
+          b.set(D("config","escola"),{criadaEm:Date.now(),por:c.user.uid});
+          await b.commit();
+        }catch(e){try{await Au.deleteUser(c.user)}catch(_){}throw e}
+      },
+      async criarLogin(email,senha){
+        const a2=sec();
+        try{
+          const c=await Au.createUserWithEmailAndPassword(a2,email,senha);
+          await Au.signOut(a2);return c.user.uid;
+        }catch(e){
+          if(e.code!=="auth/email-already-in-use")throw e;
+          try{const c=await Au.signInWithEmailAndPassword(a2,email,senha);await Au.signOut(a2);return c.user.uid}
+          catch(_){throw new Error("Este e-mail já tem uma conta no sistema com outra senha. Use outro e-mail ou peça para a aluna tocar em “Esqueci minha senha”.")}
+        }
+      },
+      ouvir(user,cb,err){
+        if(user.role==="prof")return F.onSnapshot(C("alunas"),s=>cb(s.docs.map(d=>d.data()),s.metadata),err);
+        return F.onSnapshot(D("alunas",user.alunaId),s=>cb(s.exists()?[s.data()]:[],s.metadata),err);
+      },
+      gravarAluna:a=>F.setDoc(D("alunas",a.id),limpo(a)),
+      criarAluna(a,p){const b=F.writeBatch(fs);b.set(D("alunas",a.id),limpo(a));b.set(D("perfis",a.uid),p);return b.commit()},
+      excluirAluna(a){const b=F.writeBatch(fs);b.delete(D("alunas",a.id));if(a.uid)b.delete(D("perfis",a.uid));return b.commit()}
+    };
+  }catch(e){nuvem={configurado:true,erro:String(e&&e.message||e)}}
+}
+window.iniciarApp(nuvem);
+</script>
+</body>
+</html>
