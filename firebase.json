@@ -1,0 +1,10 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": ["firebase.json", "firestore.rules", "LEIA-ME.md", "exportar-cadastros.html", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {"source": "/sw.js", "headers": [{"key": "Cache-Control", "value": "no-cache"}]}
+    ]
+  },
+  "firestore": {"rules": "firestore.rules"}
+}

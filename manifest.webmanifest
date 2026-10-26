@@ -1,18 +1,16 @@
 {
   "name": "Agenda da Turma — Caderno de Estudos Musicais",
-  "short_name": "Agenda da Turma",
-  "description": "Agenda, fichas e caderno de estudos musicais da turma.",
+  "short_name": "Agenda",
+  "description": "Caderno de estudos musicais: professora e alunas em um só lugar.",
   "lang": "pt-BR",
-  "id": "/agenda-da-turma/",
-  "start_url": "/agenda-da-turma/",
-  "scope": "/agenda-da-turma/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#D8C8FF",
+  "background_color": "#fff8fa",
+  "theme_color": "#b03a67",
   "icons": [
-    { "src": "/agenda-da-turma/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/agenda-da-turma/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/agenda-da-turma/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ]
 }
