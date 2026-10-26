@@ -1,6 +1,6 @@
 /* Service worker da Agenda da Turma: deixa o app instalável e abrindo mesmo sem internet.
    Os DADOS não passam por aqui: o Firebase cuida deles (e guarda uma cópia offline). */
-const V = "agenda-v1";
+const V = "agenda-v2";
 const BASE = ["./", "index.html", "firebase-config.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 

@@ -151,7 +151,7 @@ dialog ul{padding-left:20px;margin:8px 0}
     <p class="err" id="err" role="alert"></p>
     <button class="pri" style="width:100%" id="entrar">🎵 Entrar</button>
     <p style="text-align:center;margin:12px 0 0"><button class="lnk" id="esqueci" type="button">Esqueci minha senha</button></p>
-    <div id="criarbox" class="hide">
+    <div id="criarbox">
       <hr style="border:0;border-top:1px solid var(--line);margin:18px 0 14px">
       <p style="text-align:center;margin:0;color:var(--mute)">Primeira vez como professora? <button class="lnk" id="criar" type="button">Criar conta</button></p>
     </div>
@@ -205,7 +205,7 @@ const prof=()=>user&&user.role==="prof";
 const aluna=()=>db.alunas.find(a=>a.id===(prof()?db.sel:user.alunaId));
 const guardarSel=()=>{try{localStorage.setItem("agendaTurma.sel",db.sel||"")}catch(e){}};
 function aviso(t,erro){const e=$("#toast");e.textContent=t;e.className="show"+(erro?" bad":"");clearTimeout(aviso.t);aviso.t=setTimeout(()=>e.className="",5000)}
-const MSG={"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"E-mail ou senha incorretos.","auth/invalid-email":"E-mail inválido.","auth/too-many-requests":"Muitas tentativas. Aguarde alguns minutos e tente de novo.","auth/network-request-failed":"Sem conexão com a internet.","auth/email-already-in-use":"Este e-mail já está cadastrado.","auth/weak-password":"A senha precisa ter pelo menos 6 caracteres.","permission-denied":"Sem permissão para esta ação.","unavailable":"Sem conexão. Tente novamente em instantes."};
+const MSG={"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"E-mail ou senha incorretos.","auth/invalid-email":"E-mail inválido.","auth/too-many-requests":"Muitas tentativas. Aguarde alguns minutos e tente de novo.","auth/network-request-failed":"Sem conexão com a internet.","auth/email-already-in-use":"Este e-mail já está cadastrado.","auth/weak-password":"A senha precisa ter pelo menos 6 caracteres.","permission-denied":"Sem permissão. Se estiver criando a conta da professora, confira se as regras do Firestore (firestore.rules) foram coladas e publicadas, e se já não existe uma professora cadastrada.","unavailable":"Sem conexão. Tente novamente em instantes."};
 const msgErro=e=>MSG[e&&e.code]||MSG[(e&&e.code||"").replace("firestore/","")]||(e&&e.message)||"Algo deu errado. Tente novamente.";
 /* grava a aluna no banco online (aparece em todos os aparelhos) */
 function salvar(a=aluna()){if(!a||!nuvem)return;nuvem.gravarAluna(a).catch(e=>aviso("Não foi possível salvar: "+msgErro(e),true))}
@@ -236,7 +236,7 @@ function mostrarLogin(){
   db={alunas:[],sel:null};
   $("#splash").classList.add("hide");$("#app").classList.add("hide");$("#login").classList.remove("hide");
   $("#sn").value="";$("#entrar").disabled=false;
-  if(nuvem&&nuvem.configurado)nuvem.escolaExiste().then(x=>$("#criarbox").classList.toggle("hide",x)).catch(()=>{});
+  if(nuvem&&nuvem.configurado)nuvem.escolaExiste().then(x=>$("#criarbox").classList.toggle("hide",x)).catch(()=>$("#criarbox").classList.remove("hide"));
 }
 function mostrarApp(){
   $("#splash").classList.add("hide");$("#login").classList.add("hide");$("#app").classList.remove("hide");
