@@ -7,7 +7,7 @@
 export const firebaseConfig = {
   apiKey: "AIzaSyAv1MTRGFim2gaT_QDKZhKObaTH3CoDRsc",
   authDomain: "agenda-da-turma-15249.firebaseapp.com",
-  projectId: ""agenda-da-turma-15249",
+  projectId: "agenda-da-turma-15249",
   storageBucket: "agenda-da-turma-15249.firebasestorage.app",
   messagingSenderId: "193062258023",
   appId: "1:193062258023:web:1e99b3d88b68db42ecdbc2"
