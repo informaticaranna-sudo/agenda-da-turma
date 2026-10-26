@@ -98,12 +98,6 @@ dialog::backdrop{background:#0006}
   body{background:#fff}
 }
 </style>
-  <!-- 1) Cole dentro de <head> no index.html, antes de </head> -->
-<link rel="manifest" href="/agenda-da-turma/manifest.webmanifest">
-<meta name="theme-color" content="#D8C8FF">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="/agenda-da-turma/icons/icon-192.png">
 </head>
 <body>
 
@@ -370,18 +364,5 @@ function baixar(a){
   document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 </script>
-  <!-- 2) Cole antes de </body>, no fim do index.html -->
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function () {
-      navigator.serviceWorker.register("/agenda-da-turma/service-worker.js", {
-        scope: "/agenda-da-turma/"
-      }).catch(function (error) {
-        console.error("Falha ao registrar o service worker:", error);
-      });
-    });
-  }
-</script>
-
 </body>
 </html>
