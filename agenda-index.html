@@ -132,6 +132,9 @@ dialog::backdrop{background:#3a2a3166;backdrop-filter:blur(2px)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 #toast.bad{background:#b3261e}
 dialog ul{padding-left:20px;margin:8px 0}
+.dt{display:block;background:none;border:0;padding:0;min-height:0;font:.72rem "DM Mono",ui-monospace,monospace;color:var(--wine);text-decoration:underline;text-underline-offset:2px;text-align:left}
+.ed{margin-left:auto;background:none;border:0;color:var(--wine2);padding:2px 6px;min-height:0;font-size:.95rem}
+.barra{background:var(--soft);border:1px solid var(--line);border-radius:18px;padding:10px 14px;margin:10px 0}
 @media print{#toast,#splash{display:none!important}}
 </style>
 </head>
@@ -193,14 +196,23 @@ const volItens=(ex,es,hs=[])=>({
   total:ex+es+hs.length});
 const V1=volItens(22,40,[131,158,468]),V2=volItens(20,30),V3=volItens(10,25),V4=volItens(10,12);
 const CATS=[["msa","Fases MSA",16,"Fase"],["msaex","Exercícios MSA",113,"Exercício"],["escalas","Escalas",24,"Escala",ESC_NOMES,[["Escalas Maiores",1,12],["Escalas menores",13,24]]],["hinos","Hinos",480,"Hino"],["coros","Coros",5,"Coro"],["v1","Volume 1",V1.total,"Item",V1.nomes,V1.grupos],["v2","Volume 2",V2.total,"Item",V2.nomes,V2.grupos],["v3","Volume 3",V3.total,"Item",V3.nomes,V3.grupos],["v4","Volume 4",V4.total,"Item",V4.nomes,V4.grupos]];
-const nomeItem=(c,n)=>c[4]?c[4][n-1]:`${c[3]} ${n}`;
+const nomeItem=(c,n)=>(c.ex&&c.ex[n]!==undefined)?c.ex[n]:(c[4]?c[4][n-1]:`${c[3]} ${n}`);
+/* categorias da aluna = as padrão + itens/métodos que a professora cadastrou (a.extras / a.metodosX) */
+const ehX=c=>c[0][0]==="x";
+const catsDe=a=>{
+  const ex=a.extras||{};
+  const mk=(c,base)=>{const l=ex[c[0]]||[],r=[...c];r[2]=base+l.length;r.base=base;r.ex=Object.fromEntries(l.map(e=>[e.n,e.nome]));
+    r.ns=[...Array.from({length:base},(_,i)=>i+1),...l.map(e=>e.n)];
+    if(l.length&&c[5])r[5]=[...c[5],["Adicionados",base+1,Infinity]];return r};
+  return[...CATS.map(c=>mk(c,c[2])),...(a.metodosX||[]).map(m=>mk([m.k,m.nome,0,"Item"],0))];
+};
 const feitosDe=(a,k)=>Object.keys(a.prog).filter(x=>x.startsWith(k+"-")).length;
 const GRUPOS={MSA:["msa","msaex"],Volumes:["v1","v2","v3","v4"],Hinos:["hinos","coros"],Escalas:["escalas"]};
-const novaAluna=(nome,email,nivel,extra={})=>({id:uid(),nome,email,instr:"Piano",nivel,tel:"",nasc:"",inicio:hoje(),mensal:"",notas:[],crono:{},metodos:"",anots:[],pagos:{},prog:{},pratica:{},...extra});
+const novaAluna=(nome,email,nivel,extra={})=>({id:uid(),nome,email,instr:"Piano",nivel,tel:"",nasc:"",inicio:hoje(),mensal:"",notas:[],crono:{},metodos:"",anots:[],pagos:{},prog:{},pratica:{},extras:{},metodosX:[],...extra});
 
-const limpar=a=>{a.prog=a.prog||{};a.notas=a.notas||[];a.anots=a.anots||[];a.crono=a.crono||{};a.pagos=a.pagos||{};a.metodos=a.metodos||"";Object.keys(a.prog).forEach(k=>{if(k.startsWith("escalas-")&&+k.slice(8)>24)delete a.prog[k]});return a};
+const limpar=a=>{a.prog=a.prog||{};a.notas=a.notas||[];a.anots=a.anots||[];a.crono=a.crono||{};a.pagos=a.pagos||{};a.metodos=a.metodos||"";a.extras=a.extras||{};a.metodosX=a.metodosX||[];Object.keys(a.prog).forEach(k=>{if(k.startsWith("escalas-")&&+k.slice(8)>24&&!(a.extras.escalas||[]).some(e=>e.n===+k.slice(8)))delete a.prog[k]});return a};
 /* ---------- estado (os dados ficam no banco online; aqui é só uma cópia em memória) ---------- */
-let db={alunas:[],sel:null},user=null,aba=0,filtro="Todos",busca="",limite={},nuvem=null,pronto=false,unsub=null,travaAuth=false;
+let db={alunas:[],sel:null},user=null,aba=0,filtro="Todos",busca="",limite={},nuvem=null,pronto=false,unsub=null,travaAuth=false,dataMarca=null;
 const prof=()=>user&&user.role==="prof";
 const aluna=()=>db.alunas.find(a=>a.id===(prof()?db.sel:user.alunaId));
 const guardarSel=()=>{try{localStorage.setItem("agendaTurma.sel",db.sel||"")}catch(e){}};
@@ -294,6 +306,7 @@ document.querySelectorAll("[data-inst]").forEach(b=>b.onclick=async()=>{if(!conv
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 
 function dialogo(html,ok,lbl){
+  $("#fm").onclick=null;
   $("#fm").innerHTML=html+'<p class="err" id="derr"></p><div class="row" style="margin-top:14px"><button type="button" class="btn" id="dx">Cancelar</button><button type="button" class="pri" id="dok">'+(lbl||"Salvar")+'</button></div>';
   const d=$("#dlg");d.style.maxWidth="";d.showModal();$("#dx").onclick=()=>d.close();
   $("#dok").onclick=async()=>{const b=$("#dok"),v=Object.fromEntries([...$("#fm").elements].filter(e=>e.name).map(e=>[e.name,e.value.trim()]));b.disabled=true;let r;try{r=await ok(v)}catch(e){r=msgErro(e)}b.disabled=false;if(r)$("#derr").textContent=r;else d.close()};
@@ -354,7 +367,7 @@ function render(){
 }
 $("#lista").onclick=e=>{
   const s=e.target.closest("[data-s]"),d=e.target.closest("[data-d]");
-  if(s){db.sel=s.dataset.s;aba=0;guardarSel();render()}
+  if(s){db.sel=s.dataset.s;aba=0;dataMarca=null;guardarSel();render()}
   if(d){const a=db.alunas.find(x=>x.id===d.dataset.d);if(a&&confirm(`Excluir ${a.nome} e todo o caderno dela? Esta ação não pode ser desfeita.`))removerAluna(a)}
 };
 
@@ -413,35 +426,93 @@ function pagto(a,el){
 
 /* ---------- jornada ---------- */
 function jornada(a,el){
-  const tot=CATS.reduce((s,c)=>s+c[2],0),feitos=k=>Object.keys(a.prog).filter(x=>x.startsWith(k+"-")).length,all=Object.keys(a.prog).length;
-  const pct=Math.round(all/tot*100),ro=!prof();
-  const vis=filtro==="Todos"?CATS:CATS.filter(c=>GRUPOS[filtro].includes(c[0]));
+  const C=catsDe(a),ro=!prof(),tot=C.reduce((s,c)=>s+c[2],0),feitos=k=>feitosDe(a,k),all=Object.keys(a.prog).length;
+  if(filtro==="Outros"&&!a.metodosX.length)filtro="Todos";
+  const pct=tot?Math.round(all/tot*100):0;
+  const vis=filtro==="Todos"?C:filtro==="Outros"?C.filter(ehX):C.filter(c=>GRUPOS[filtro].includes(c[0]));
+  const barra=ro?"":`<div class="barra"><div class="row" style="margin:0"><div><label for="dtm" style="margin-top:0">Data ao marcar um item</label><input id="dtm" type="date" value="${esc(dataMarca||hoje())}"></div><button class="btn sm" id="dth" type="button">Hoje</button><button class="pri sm" id="novomet" type="button">＋ Novo método</button></div><p class="hint" style="margin:8px 0 0;font-size:.85rem">A data acima é gravada em cada item que você marcar. Para corrigir a data de um item já marcado, toque na data dele. Use “＋ Adicionar item” em cada bloco para cadastrar mais exercícios.</p></div>`;
   el.innerHTML=cabec("📈 Jornada da Aprendiz",ro?"Acompanhe sua evolução. Quem marca os itens concluídos é a professora (somente leitura).":"Marque cada item concluído e acompanhe a evolução da aluna.")+
   `<div class="hero"><h3>Seu progresso geral</h3><div class="big mono">${pct}%</div><p style="margin:4px 0 0"><b>${all}</b> registro(s) de estudo concluído(s).</p><div class="bar"><i style="width:${pct}%"></i></div><button class="btn" id="vd">Ver detalhes</button></div>
   <h3 style="font-size:1.25rem;margin-top:20px">Seu andamento</h3>
-  <div class="stats">${CATS.map(c=>`<div class="st"><b class="mono">${feitos(c[0])}/${c[2]}</b><small>${c[1].toLowerCase()}</small></div>`).join("")}</div>
-  <div class="chips" id="fl">${["Todos",...Object.keys(GRUPOS)].map(g=>`<button class="chip ${g===filtro?"on":""}" data-f="${g}">${g}</button>`).join("")}<input id="bs" type="search" placeholder="Buscar item..." value="${esc(busca)}" style="max-width:200px" aria-label="Buscar item"></div>
-  <div class="chips">${[["Todos",all,tot],...CATS.map(c=>[c[1],feitos(c[0]),c[2]])].map(x=>`<span class="mini">${x[0]}<br><span class="mono">${Math.round(x[1]/x[2]*100)}%</span></span>`).join("")}</div>
+  <div class="stats">${C.map(c=>`<div class="st"><b class="mono">${feitos(c[0])}/${c[2]}</b><small>${esc(c[1].toLowerCase())}</small></div>`).join("")}</div>
+  ${barra}
+  <div class="chips" id="fl">${["Todos",...Object.keys(GRUPOS),...(a.metodosX.length?["Outros"]:[])].map(g=>`<button class="chip ${g===filtro?"on":""}" data-f="${g}">${g}</button>`).join("")}<input id="bs" type="search" placeholder="Buscar item..." value="${esc(busca)}" style="max-width:200px" aria-label="Buscar item"></div>
+  <div class="chips">${[["Todos",all,tot],...C.map(c=>[c[1],feitos(c[0]),c[2]])].map(x=>`<span class="mini">${esc(x[0])}<br><span class="mono">${x[2]?Math.round(x[1]/x[2]*100):0}%</span></span>`).join("")}</div>
   <div id="det">${vis.map(c=>bloco(c,a,ro)).join("")}</div>`;
   $("#vd").onclick=()=>detalhes(a);
   $("#bs").oninput=e=>{busca=e.target.value;const p=e.target.selectionStart;jornada(a,el);const b=$("#bs");b.focus();b.setSelectionRange(p,p)};
-  el.onclick=e=>{const f=e.target.closest("[data-f]"),m=e.target.closest("[data-m]"),p=e.target.closest("[data-p]");
+  if(!ro){
+    $("#dtm").onchange=e=>{dataMarca=e.target.value||null};
+    $("#dth").onclick=()=>{dataMarca=null;const y=scrollY;jornada(a,el);scrollTo(0,y)};
+    $("#novomet").onclick=()=>novoItens(a,null);
+  }
+  el.onclick=e=>{const f=e.target.closest("[data-f]"),m=e.target.closest("[data-m]"),p=e.target.closest("[data-p]"),ed=e.target.closest("[data-e]"),ax=e.target.closest("[data-ax]"),dx=e.target.closest("[data-dx]");
     if(f){filtro=f.dataset.f;jornada(a,el)}
     if(m){limite[m.dataset.m]=9999;jornada(a,el)}
-    if(p&&prof()){if(p.checked)a.prog[p.dataset.p]=hoje();else delete a.prog[p.dataset.p];salvar();const y=scrollY;jornada(a,el);scrollTo(0,y)}};
+    if(p&&prof()){if(p.checked)a.prog[p.dataset.p]=dataMarca||hoje();else delete a.prog[p.dataset.p];salvar();const y=scrollY;jornada(a,el);scrollTo(0,y)}
+    if(ed&&prof()){e.preventDefault();editarItem(a,ed.dataset.e)}
+    if(ax&&prof())novoItens(a,ax.dataset.ax);
+    if(dx&&prof()&&confirm("Excluir este método e todos os itens dele desta aluna?")){
+      const k=dx.dataset.dx;a.metodosX=a.metodosX.filter(x=>x.k!==k);delete a.extras[k];
+      Object.keys(a.prog).forEach(x=>{if(x.startsWith(k+"-"))delete a.prog[x]});salvar();jornada(a,el)}};
+}
+/* recarrega a aba mantendo a posição da página */
+const recarregar=()=>{const y=scrollY;caderno();scrollTo(0,y)};
+/* altera a data (e, nos itens cadastrados, o nome) de um item; também remove itens cadastrados */
+function editarItem(a,key,depois){
+  const i=key.lastIndexOf("-"),k=key.slice(0,i),n=+key.slice(i+1),c=catsDe(a).find(x=>x[0]===k);
+  if(!c)return;
+  const v=a.prog[key],custom=c.ex[n]!==undefined,fim=()=>depois?setTimeout(depois,0):recarregar();
+  dialogo(`<h3>✎ ${esc(nomeItem(c,n))}</h3><p class="hint">${esc(c[1])}</p>`+
+    (custom?`<label>Nome do item</label><input name="nome" value="${esc(nomeItem(c,n))}">`:"")+
+    (v?`<label>Data em que foi passada</label><input name="data" type="date" value="${typeof v==="string"?esc(v):""}"><p class="hint" style="font-size:.85rem">Deixe em branco para ficar “sem data”.</p>`:`<p class="hint">Este item ainda não foi marcado como concluído.</p>`)+
+    (custom?`<p><button type="button" class="lnk" id="rmi" style="color:#b3261e">🗑 Remover este item</button></p>`:""),
+  v2=>{
+    if(custom){if(!v2.nome)return"Informe o nome do item.";const e=(a.extras[k]||[]).find(x=>x.n===n);if(e)e.nome=v2.nome}
+    if(v&&"data" in v2)a.prog[key]=v2.data||true;
+    salvar(a);fim();
+  });
+  const rm=$("#rmi");
+  if(rm)rm.onclick=()=>{if(!confirm("Remover este item?"))return;a.extras[k]=(a.extras[k]||[]).filter(x=>x.n!==n);delete a.prog[key];salvar(a);$("#dlg").close();fim()};
+}
+/* cadastra novos itens (k = categoria) ou um método novo (k = null) */
+function novoItens(a,k){
+  const c=k&&catsDe(a).find(x=>x[0]===k);
+  dialogo((c?`<h3>＋ Adicionar a ${esc(c[1])}</h3>`:`<h3>＋ Novo método</h3><p class="hint">Cadastre um método ou livro (ex.: Bona, Czerny) e os exercícios dele.</p><label>Nome do método</label><input name="nome" placeholder="Ex.: Método Bona">`)+
+    `<label>Gerar itens numerados</label><div class="row"><input name="pf" value="Exercício" placeholder="Prefixo" aria-label="Prefixo"><input name="de" type="number" min="0" placeholder="De" aria-label="De"><input name="ate" type="number" min="0" placeholder="Até" aria-label="Até"></div>
+    <label>Ou digite os nomes, um por linha</label><textarea name="lista" style="min-height:90px" placeholder="Lição 1&#10;Lição 2&#10;Peça de Bach"></textarea>`+
+    (db.alunas.length>1?`<label style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" name="todas" value="1" style="width:auto;min-height:0"> Adicionar também para todas as alunas</label>`:""),
+  v=>{
+    const nomes=[],de=v.de===""?1:+v.de,ate=v.ate===""?null:+v.ate,pf=v.pf||"Item";
+    if(!c&&!v.nome)return"Dê um nome ao método.";
+    if(ate!==null){if(!(ate>=de)||ate-de>=500)return"Confira os números (máximo 500 itens por vez).";for(let n=de;n<=ate;n++)nomes.push(pf+" "+n)}
+    v.lista.split("\n").map(x=>x.trim()).filter(Boolean).forEach(x=>nomes.push(x));
+    if(!nomes.length)return"Informe ao menos um item (numerados ou na lista).";
+    const key=c?c[0]:"x"+uid(),nome=c?c[1]:v.nome,base=c?c.base:0,ck=$("#fm").querySelector("[name=todas]");
+    (ck&&ck.checked?db.alunas:[a]).forEach(t=>{
+      limpar(t);
+      if(key[0]==="x"&&!t.metodosX.some(m=>m.k===key))t.metodosX.push({k:key,nome});
+      const l=t.extras[key]||(t.extras[key]=[]);let mx=Math.max(base,0,...l.map(e=>e.n));
+      nomes.forEach(nm=>l.push({n:++mx,nome:nm}));
+      salvar(t);
+    });
+    if(!c)filtro="Todos";
+    recarregar();
+  },"Adicionar");
 }
 
 function detalhes(a){
   const tot=Object.keys(a.prog).length;
-  const sec=CATS.map(c=>{
-    const L=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>a.prog[c[0]+"-"+n]).map(n=>({n,v:a.prog[c[0]+"-"+n]}));
+  const sec=catsDe(a).map(c=>{
+    const L=c.ns.filter(n=>a.prog[c[0]+"-"+n]).map(n=>({n,v:a.prog[c[0]+"-"+n]}));
     if(!L.length)return"";
     const dt=x=>typeof x.v==="string"?x.v:"";
     L.sort((x,y)=>dt(y).localeCompare(dt(x))||x.n-y.n);
-    return`<h4 class="sub2">${c[1]} <small class="mono" style="color:var(--mute)">${L.length}/${c[2]}</small></h4><table>${L.map(x=>`<tr><td>${esc(nomeItem(c,x.n))}</td><td class="mono">${dataItem(x.v)}</td></tr>`).join("")}</table>`;
+    return`<h4 class="sub2">${c[1]} <small class="mono" style="color:var(--mute)">${L.length}/${c[2]}</small></h4><table>${L.map(x=>`<tr><td>${esc(nomeItem(c,x.n))}</td><td class="mono">${prof()?`<button type="button" class="dt" data-e="${c[0]}-${x.n}" title="Alterar a data">📅 ${dataItem(x.v)}</button>`:dataItem(x.v)}</td></tr>`).join("")}</table>`;
   }).join("");
   $("#fm").innerHTML=`<h3>📈 O que já foi passado</h3><p class="hint">${esc(a.nome)} — ${tot} item(ns) concluído(s), do mais recente ao mais antigo.</p>${sec||'<p class="hint">Nenhum item foi marcado como concluído ainda.</p>'}<div class="row" style="margin-top:14px;justify-content:flex-end"><button type="button" class="pri" id="dx">Fechar</button></div>`;
   const d=$("#dlg");d.style.maxWidth="640px";d.showModal();$("#dx").onclick=()=>d.close();
+  if(prof())$("#fm").onclick=e=>{const b=e.target.closest("[data-e]");if(b)editarItem(a,b.dataset.e,()=>detalhes(a))};
 }
 
 async function removerAluna(a){
@@ -453,14 +524,17 @@ async function removerAluna(a){
 
 function bloco(c,a,ro){
   const q=busca.toLowerCase(),feito=n=>a.prog[c[0]+"-"+n];
-  const item=n=>{const v=feito(n);return`<label class="it ${v?"ok":""}"><input type="checkbox" data-p="${c[0]}-${n}" ${v?"checked":""} ${ro?"disabled":""}><span><span class="nm">${esc(nomeItem(c,n))}</span>${v?`<small>${dataItem(v)}</small>`:""}</span></label>`};
+  const item=n=>{const v=feito(n),key=c[0]+"-"+n,cu=c.ex[n]!==undefined;
+    return`<label class="it ${v?"ok":""}"><input type="checkbox" data-p="${key}" ${v?"checked":""} ${ro?"disabled":""}><span><span class="nm">${esc(nomeItem(c,n))}</span>${v?(ro?`<small>${dataItem(v)}</small>`:`<button type="button" class="dt" data-e="${key}" title="Alterar a data">📅 ${dataItem(v)}</button>`):""}</span>${!ro&&cu?`<button type="button" class="ed" data-e="${key}" title="Editar item" aria-label="Editar item">✎</button>`:""}</label>`};
   const vazio='<small class="hint">Nenhum item encontrado.</small>';
-  let ids=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>!busca||nomeItem(c,n).toLowerCase().includes(q));
-  const lim=limite[c[0]]||(busca?500:(c[5]?70:48)),mais=ids.length>lim;ids=ids.slice(0,lim);
+  let ids=c.ns.filter(n=>!busca||nomeItem(c,n).toLowerCase().includes(q));
+  const lim=limite[c[0]]||(busca?500:(c[5]?70:48)),bs=ids.filter(n=>n<=c.base),xs=ids.filter(n=>n>c.base),mais=bs.length>lim;
+  ids=[...bs.slice(0,lim),...xs];   /* itens cadastrados aparecem sempre */
   let corpo;
   if(c[5])corpo=c[5].map(g=>{const l=ids.filter(n=>n>=g[1]&&n<=g[2]);return l.length?`<h4 class="sub2">${g[0]}</h4><div class="itens">${l.map(item).join("")}</div>`:""}).join("")||vazio;
-  else corpo=`<div class="itens">${ids.map(item).join("")||vazio}</div>`;
-  return`<h3 style="font-size:1.1rem;margin-top:18px">${c[1]} <small class="mono" style="color:var(--mute)">${feitosDe(a,c[0])}/${c[2]}</small></h3>${corpo}${mais?`<p><button class="btn" data-m="${c[0]}">Mostrar mais</button></p>`:""}`;
+  else corpo=`<div class="itens">${ids.map(item).join("")||(c.ns.length?vazio:'<small class="hint">Nenhum item ainda. Use “＋ Adicionar item”.</small>')}</div>`;
+  const acoes=ro?"":`<p style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-ax="${c[0]}">＋ Adicionar item</button>${ehX(c)?`<button type="button" class="btn sm" data-dx="${c[0]}">🗑 Excluir método</button>`:""}</p>`;
+  return`<h3 style="font-size:1.1rem;margin-top:18px">${esc(c[1])} <small class="mono" style="color:var(--mute)">${feitosDe(a,c[0])}/${c[2]}</small></h3>${corpo}${mais?`<p><button class="btn" data-m="${c[0]}">Mostrar mais</button></p>`:""}${acoes}`;
 }
 
 /* ---------- ficha: imprimir / baixar ---------- */
@@ -468,7 +542,7 @@ const FICHA_CSS=`.fch{font:14px/1.5 "DM Sans",Arial,sans-serif;color:#222;max-wi
 function fichaCorpo(a){
   const d=s=>s?String(s).split("-").reverse().join("/"):"",v=s=>esc(s)||"—",ano=new Date().getFullYear();
   const med=a.notas.length?(a.notas.reduce((s,n)=>s+ +n.nota,0)/a.notas.length).toFixed(1):"—";
-  const tot=CATS.reduce((s,c)=>s+c[2],0),all=Object.keys(a.prog).length,pct=Math.round(all/tot*100);
+  const CC=catsDe(a),tot=CC.reduce((s,c)=>s+c[2],0),all=Object.keys(a.prog).length,pct=tot?Math.round(all/tot*100):0;
   const dados=[["Nome",a.nome],["E-mail",a.email],["Instrumento",a.instr],["Nível",a.nivel],["Telefone / WhatsApp",a.tel],["Nascimento",d(a.nasc)],["Início das aulas",d(a.inicio)]];
   return`<div class="fch"><h1>🎼 Caderno da Aluna</h1><p class="s">${esc(a.nome)} • ${esc(a.instr)} • Nível ${esc(a.nivel)}<br>Emitido em ${d(hoje())}</p>
 <h2>1. Dados da Aluna</h2><table>${dados.map(r=>`<tr><td class="k">${r[0]}</td><td>${v(r[1])}</td></tr>`).join("")}</table>
@@ -477,7 +551,7 @@ function fichaCorpo(a){
 <h2>4. Anotações dos Métodos</h2><p>${esc(a.metodos).replace(/\n/g,"<br>")||"—"}</p>
 <h2>5. Anotações</h2>${a.anots.length?a.anots.map(n=>`<div class="nota"><small>${d(n.data)} • ${esc(n.autor)}</small><br>${esc(n.txt).replace(/\n/g,"<br>")}</div>`).join(""):"<p>Sem anotações.</p>"}
 <h2>6. Calendário de Pagamento — ${ano}</h2><p>Mensalidade: <b>${a.mensal?"R$ "+esc(a.mensal):"—"}</b></p><table><tr>${MESES.map((m,i)=>{const p=a.pagos[ano+"-"+i];return`<td>${m}<br><span class="${p?"ok":""}">${p?"Pago ✓":"Pendente"}</span></td>`+(i%4===3&&i<11?"</tr><tr>":"")}).join("")}</tr></table>
-<h2>7. Jornada da Aprendiz</h2><p>Progresso geral: <b>${pct}%</b> (${all} de ${tot} itens concluídos)</p>${CATS.map(c=>{const ok=Array.from({length:c[2]},(_,i)=>i+1).filter(n=>a.prog[c[0]+"-"+n]).map(n=>{const v=a.prog[c[0]+"-"+n];return nomeItem(c,n)+(typeof v==="string"&&v?` (${d(v)})`:"")});return`<p><b>${c[1]}</b> — ${ok.length}/${c[2]}<br><small>${ok.length?esc(ok.join(", ")):"nenhum concluído"}</small></p>`}).join("")}</div>`;
+<h2>7. Jornada da Aprendiz</h2><p>Progresso geral: <b>${pct}%</b> (${all} de ${tot} itens concluídos)</p>${CC.map(c=>{const ok=c.ns.filter(n=>a.prog[c[0]+"-"+n]).map(n=>{const v=a.prog[c[0]+"-"+n];return nomeItem(c,n)+(typeof v==="string"&&v?` (${d(v)})`:"")});return`<p><b>${c[1]}</b> — ${ok.length}/${c[2]}<br><small>${ok.length?esc(ok.join(", ")):"nenhum concluído"}</small></p>`}).join("")}</div>`;
 }
 function imprimir(a){
   const p=$("#printArea"),t=document.title;
