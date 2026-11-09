@@ -133,6 +133,17 @@ dialog::backdrop{background:#3a2a3166;backdrop-filter:blur(2px)}
 #toast.bad{background:#b3261e}
 dialog ul{padding-left:20px;margin:8px 0}
 .dt{display:block;background:none;border:0;padding:0;min-height:0;font:.72rem "DM Mono",ui-monospace,monospace;color:var(--wine);text-decoration:underline;text-underline-offset:2px;text-align:left}
+#dlg{max-height:90vh;overflow:auto}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;background:#fffdfd}
+.seg label{flex:1;display:flex;margin:0;position:relative;cursor:pointer;color:var(--wine2);font-weight:500;font-size:.82rem}
+.seg input{position:absolute;opacity:0;width:0;min-height:0;pointer-events:none}
+.seg span{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 4px;min-height:44px;line-height:1.2;transition:background .2s}
+.seg label+label span{border-left:1px solid var(--line)}
+.seg input:checked+span{background:var(--wine);color:#fff;font-weight:700}
+.seg input:focus-visible+span{box-shadow:inset 0 0 0 3px #b03a6755}
+.hi{border:1px solid var(--line);border-radius:14px;padding:8px 12px;margin-top:8px;background:var(--soft);font-size:.9rem}
+.hh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.hh .x{margin-left:auto;min-height:32px;min-width:32px}
+.rs{font-weight:700;font-size:.85rem}.rs.nao,.dt.nao{color:#b3261e}.rs.aval,.dt.aval{color:#8a6a00}
 .ed{margin-left:auto;background:none;border:0;color:var(--wine2);padding:2px 6px;min-height:0;font-size:.95rem}
 .barra{background:var(--soft);border:1px solid var(--line);border-radius:18px;padding:10px 14px;margin:10px 0}
 @media print{#toast,#splash{display:none!important}}
@@ -208,9 +219,9 @@ const catsDe=a=>{
 };
 const feitosDe=(a,k)=>Object.keys(a.prog).filter(x=>x.startsWith(k+"-")).length;
 const GRUPOS={MSA:["msa","msaex"],Volumes:["v1","v2","v3","v4"],Hinos:["hinos","coros"],Escalas:["escalas"]};
-const novaAluna=(nome,email,nivel,extra={})=>({id:uid(),nome,email,instr:"Piano",nivel,tel:"",nasc:"",inicio:hoje(),mensal:"",notas:[],crono:{},metodos:"",anots:[],pagos:{},prog:{},pratica:{},extras:{},metodosX:[],...extra});
+const novaAluna=(nome,email,nivel,extra={})=>({id:uid(),nome,email,instr:"Piano",nivel,tel:"",nasc:"",inicio:hoje(),mensal:"",notas:[],crono:{},metodos:"",anots:[],pagos:{},prog:{},hist:{},pratica:{},extras:{},metodosX:[],...extra});
 
-const limpar=a=>{a.prog=a.prog||{};a.notas=a.notas||[];a.anots=a.anots||[];a.crono=a.crono||{};a.pagos=a.pagos||{};a.metodos=a.metodos||"";a.extras=a.extras||{};a.metodosX=a.metodosX||[];Object.keys(a.prog).forEach(k=>{if(k.startsWith("escalas-")&&+k.slice(8)>24&&!(a.extras.escalas||[]).some(e=>e.n===+k.slice(8)))delete a.prog[k]});return a};
+const limpar=a=>{a.prog=a.prog||{};a.hist=a.hist||{};a.notas=a.notas||[];a.anots=a.anots||[];a.crono=a.crono||{};a.pagos=a.pagos||{};a.metodos=a.metodos||"";a.extras=a.extras||{};a.metodosX=a.metodosX||[];Object.keys(a.prog).forEach(k=>{if(k.startsWith("escalas-")&&+k.slice(8)>24&&!(a.extras.escalas||[]).some(e=>e.n===+k.slice(8)))delete a.prog[k]});return a};
 /* ---------- estado (os dados ficam no banco online; aqui é só uma cópia em memória) ---------- */
 let db={alunas:[],sel:null},user=null,aba=0,filtro="Todos",busca="",limite={},nuvem=null,pronto=false,unsub=null,travaAuth=false,dataMarca=null;
 const prof=()=>user&&user.role==="prof";
@@ -446,10 +457,11 @@ function jornada(a,el){
     $("#dth").onclick=()=>{dataMarca=null;const y=scrollY;jornada(a,el);scrollTo(0,y)};
     $("#novomet").onclick=()=>novoItens(a,null);
   }
-  el.onclick=e=>{const f=e.target.closest("[data-f]"),m=e.target.closest("[data-m]"),p=e.target.closest("[data-p]"),ed=e.target.closest("[data-e]"),ax=e.target.closest("[data-ax]"),dx=e.target.closest("[data-dx]");
+  el.onclick=e=>{const f=e.target.closest("[data-f]"),m=e.target.closest("[data-m]"),p=e.target.closest("[data-p]"),ed=e.target.closest("[data-e]"),ax=e.target.closest("[data-ax]"),dx=e.target.closest("[data-dx]"),g=e.target.closest("[data-g]");
     if(f){filtro=f.dataset.f;jornada(a,el)}
     if(m){limite[m.dataset.m]=9999;jornada(a,el)}
-    if(p&&prof()){if(p.checked)a.prog[p.dataset.p]=dataMarca||hoje();else delete a.prog[p.dataset.p];salvar();const y=scrollY;jornada(a,el);scrollTo(0,y)}
+    if(p&&prof()){if(p.checked){e.preventDefault();registrar(a,p.dataset.p)}else{delete a.prog[p.dataset.p];salvar();const y=scrollY;jornada(a,el);scrollTo(0,y)}}
+    if(g){e.preventDefault();registrar(a,g.dataset.g)}
     if(ed&&prof()){e.preventDefault();editarItem(a,ed.dataset.e)}
     if(ax&&prof())novoItens(a,ax.dataset.ax);
     if(dx&&prof()&&confirm("Excluir este método e todos os itens dele desta aluna?")){
@@ -458,6 +470,32 @@ function jornada(a,el){
 }
 /* recarrega a aba mantendo a posição da página */
 const recarregar=()=>{const y=scrollY;caderno();scrollTo(0,y)};
+/* resultado da lição: formulário aberto ao marcar o item (Passou / Não passou / Em avaliação) + histórico */
+const RES={passou:["✓","Passou"],nao:["✕","Não passou"],aval:["⏳","Em avaliação"]};
+function registrar(a,key,depois){
+  const i=key.lastIndexOf("-"),k=key.slice(0,i),n=+key.slice(i+1),c=catsDe(a).find(x=>x[0]===k);
+  if(!c)return;
+  const ro=!prof(),d=$("#dlg"),f=$("#fm"),fim=()=>depois?setTimeout(depois,0):recarregar();
+  const H=()=>(a.hist&&a.hist[key])||[],v=a.prog[key],u=H()[H().length-1];
+  const res=v?"passou":(u&&u.res!=="passou"?u.res:"passou"),data=typeof v==="string"&&v?v:(dataMarca||hoje());
+  const lista=()=>{const h=H();$("#hl").innerHTML=h.length?h.map((r,j)=>({r,j})).reverse().map(({r,j})=>`<div class="hi"><div class="hh"><span class="rs ${r.res}">${RES[r.res][0]} ${RES[r.res][1]}</span><small>${r.data?dBR(r.data):"sem data"}${r.por?" • "+esc(r.por):""}</small>${ro?"":`<button type="button" class="x" data-hd="${j}" aria-label="Remover registro">🗑</button>`}</div>${r.txt?`<div style="margin-top:4px">${esc(r.txt).replace(/\n/g,"<br>")}</div>`:""}</div>`).join(""):'<p class="hint">Nenhum registro anterior.</p>'};
+  f.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><h3>${esc(nomeItem(c,n))}</h3><button type="button" class="x" id="dx" aria-label="Fechar">✕</button></div><p class="hint" style="margin:2px 0 0">${esc(c[1])}</p>`+
+  (ro?"":`<label>Resultado</label><div class="seg" role="radiogroup" aria-label="Resultado">${Object.entries(RES).map(([r,t])=>`<label><input type="radio" name="res" value="${r}" ${r===res?"checked":""}><span>${t[0]} ${t[1]}</span></label>`).join("")}</div>
+  <label for="rd">Data que foi passada / Conclusão</label><input id="rd" type="date" value="${esc(data)}">
+  <label for="rt">Anotações</label><textarea id="rt" placeholder="Descreva dificuldades, evolução, o que revisar..." style="min-height:90px"></textarea>
+  <p class="err" id="derr"></p><button type="button" class="pri" id="dok" style="width:100%;margin-top:6px">Salvar</button>`)+
+  `<h3 style="font-size:1.2rem;margin-top:22px">Histórico</h3><div id="hl"></div>`;
+  d.style.maxWidth="";if(!d.open)d.showModal();lista();
+  $("#dx").onclick=()=>d.close();
+  f.onclick=e=>{const b=e.target.closest("[data-hd]");
+    if(b&&!ro&&confirm("Remover este registro do histórico?")){H().splice(+b.dataset.hd,1);if(!H().length)delete a.hist[key];salvar(a);lista()}};
+  if(!ro)$("#dok").onclick=()=>{
+    const r=f.querySelector("[name=res]:checked").value,dt=$("#rd").value,tx=$("#rt").value.trim();
+    (a.hist=a.hist||{})[key]=[...H(),{res:r,data:dt,txt:tx,por:user.nome,em:Date.now()}];
+    if(r==="passou")a.prog[key]=dt||true;else delete a.prog[key];
+    salvar(a);d.close();fim();
+  };
+}
 /* altera a data (e, nos itens cadastrados, o nome) de um item; também remove itens cadastrados */
 function editarItem(a,key,depois){
   const i=key.lastIndexOf("-"),k=key.slice(0,i),n=+key.slice(i+1),c=catsDe(a).find(x=>x[0]===k);
@@ -508,11 +546,11 @@ function detalhes(a){
     if(!L.length)return"";
     const dt=x=>typeof x.v==="string"?x.v:"";
     L.sort((x,y)=>dt(y).localeCompare(dt(x))||x.n-y.n);
-    return`<h4 class="sub2">${c[1]} <small class="mono" style="color:var(--mute)">${L.length}/${c[2]}</small></h4><table>${L.map(x=>`<tr><td>${esc(nomeItem(c,x.n))}</td><td class="mono">${prof()?`<button type="button" class="dt" data-e="${c[0]}-${x.n}" title="Alterar a data">📅 ${dataItem(x.v)}</button>`:dataItem(x.v)}</td></tr>`).join("")}</table>`;
+    return`<h4 class="sub2">${c[1]} <small class="mono" style="color:var(--mute)">${L.length}/${c[2]}</small></h4><table>${L.map(x=>`<tr><td>${esc(nomeItem(c,x.n))}</td><td class="mono">${prof()?`<button type="button" class="dt" data-g="${c[0]}-${x.n}" title="Registrar / alterar">📅 ${dataItem(x.v)}</button>`:dataItem(x.v)}</td></tr>`).join("")}</table>`;
   }).join("");
   $("#fm").innerHTML=`<h3>📈 O que já foi passado</h3><p class="hint">${esc(a.nome)} — ${tot} item(ns) concluído(s), do mais recente ao mais antigo.</p>${sec||'<p class="hint">Nenhum item foi marcado como concluído ainda.</p>'}<div class="row" style="margin-top:14px;justify-content:flex-end"><button type="button" class="pri" id="dx">Fechar</button></div>`;
   const d=$("#dlg");d.style.maxWidth="640px";d.showModal();$("#dx").onclick=()=>d.close();
-  if(prof())$("#fm").onclick=e=>{const b=e.target.closest("[data-e]");if(b)editarItem(a,b.dataset.e,()=>detalhes(a))};
+  if(prof())$("#fm").onclick=e=>{const b=e.target.closest("[data-g]");if(b)registrar(a,b.dataset.g,()=>detalhes(a))};
 }
 
 async function removerAluna(a){
@@ -524,8 +562,8 @@ async function removerAluna(a){
 
 function bloco(c,a,ro){
   const q=busca.toLowerCase(),feito=n=>a.prog[c[0]+"-"+n];
-  const item=n=>{const v=feito(n),key=c[0]+"-"+n,cu=c.ex[n]!==undefined;
-    return`<label class="it ${v?"ok":""}"><input type="checkbox" data-p="${key}" ${v?"checked":""} ${ro?"disabled":""}><span><span class="nm">${esc(nomeItem(c,n))}</span>${v?(ro?`<small>${dataItem(v)}</small>`:`<button type="button" class="dt" data-e="${key}" title="Alterar a data">📅 ${dataItem(v)}</button>`):""}</span>${!ro&&cu?`<button type="button" class="ed" data-e="${key}" title="Editar item" aria-label="Editar item">✎</button>`:""}</label>`};
+  const item=n=>{const v=feito(n),key=c[0]+"-"+n,cu=c.ex[n]!==undefined,h=(a.hist&&a.hist[key])||[],u=h[h.length-1],st=!v&&u&&u.res!=="passou"?u:null;
+    return`<label class="it ${v?"ok":""}"><input type="checkbox" data-p="${key}" ${v?"checked":""} ${ro?"disabled":""}><span><span class="nm">${esc(nomeItem(c,n))}</span>${v?(ro&&!h.length?`<small>${dataItem(v)}</small>`:`<button type="button" class="dt" data-g="${key}" title="${ro?"Ver histórico":"Registrar / alterar"}">📅 ${dataItem(v)}${h.some(x=>x.txt)?" 💬":""}</button>`):(st?`<button type="button" class="dt ${st.res}" data-g="${key}" title="${ro?"Ver histórico":"Registrar / alterar"}">${RES[st.res][0]} ${RES[st.res][1]}${st.data?" · "+dBR(st.data):""}</button>`:"")}</span>${!ro&&cu?`<button type="button" class="ed" data-e="${key}" title="Editar item" aria-label="Editar item">✎</button>`:""}</label>`};
   const vazio='<small class="hint">Nenhum item encontrado.</small>';
   let ids=c.ns.filter(n=>!busca||nomeItem(c,n).toLowerCase().includes(q));
   const lim=limite[c[0]]||(busca?500:(c[5]?70:48)),bs=ids.filter(n=>n<=c.base),xs=ids.filter(n=>n>c.base),mais=bs.length>lim;
@@ -543,6 +581,8 @@ function fichaCorpo(a){
   const d=s=>s?String(s).split("-").reverse().join("/"):"",v=s=>esc(s)||"—",ano=new Date().getFullYear();
   const med=a.notas.length?(a.notas.reduce((s,n)=>s+ +n.nota,0)/a.notas.length).toFixed(1):"—";
   const CC=catsDe(a),tot=CC.reduce((s,c)=>s+c[2],0),all=Object.keys(a.prog).length,pct=tot?Math.round(all/tot*100):0;
+  const RS={passou:"✓ Passou",nao:"✕ Não passou",aval:"⏳ Em avaliação"};
+  const regs=(()=>{const L=CC.map(c=>c.ns.filter(n=>(a.hist||{})[c[0]+"-"+n]).map(n=>`<div class="nota"><b>${esc(c[1])} — ${esc(nomeItem(c,n))}</b>${a.hist[c[0]+"-"+n].map(r=>`<br><small>${d(r.data)||"sem data"}${r.por?" • "+esc(r.por):""} •</small> <span class="${r.res==="passou"?"ok":""}">${RS[r.res]||""}</span>${r.txt?` — ${esc(r.txt).replace(/\n/g,"<br>")}`:""}`).join("")}</div>`).join("")).join("");return L?`<h2>Registros e anotações das lições</h2>${L}`:""})();
   const dados=[["Nome",a.nome],["E-mail",a.email],["Instrumento",a.instr],["Nível",a.nivel],["Telefone / WhatsApp",a.tel],["Nascimento",d(a.nasc)],["Início das aulas",d(a.inicio)]];
   return`<div class="fch"><h1>🎼 Caderno da Aluna</h1><p class="s">${esc(a.nome)} • ${esc(a.instr)} • Nível ${esc(a.nivel)}<br>Emitido em ${d(hoje())}</p>
 <h2>1. Dados da Aluna</h2><table>${dados.map(r=>`<tr><td class="k">${r[0]}</td><td>${v(r[1])}</td></tr>`).join("")}</table>
@@ -551,7 +591,7 @@ function fichaCorpo(a){
 <h2>4. Anotações dos Métodos</h2><p>${esc(a.metodos).replace(/\n/g,"<br>")||"—"}</p>
 <h2>5. Anotações</h2>${a.anots.length?a.anots.map(n=>`<div class="nota"><small>${d(n.data)} • ${esc(n.autor)}</small><br>${esc(n.txt).replace(/\n/g,"<br>")}</div>`).join(""):"<p>Sem anotações.</p>"}
 <h2>6. Calendário de Pagamento — ${ano}</h2><p>Mensalidade: <b>${a.mensal?"R$ "+esc(a.mensal):"—"}</b></p><table><tr>${MESES.map((m,i)=>{const p=a.pagos[ano+"-"+i];return`<td>${m}<br><span class="${p?"ok":""}">${p?"Pago ✓":"Pendente"}</span></td>`+(i%4===3&&i<11?"</tr><tr>":"")}).join("")}</tr></table>
-<h2>7. Jornada da Aprendiz</h2><p>Progresso geral: <b>${pct}%</b> (${all} de ${tot} itens concluídos)</p>${CC.map(c=>{const ok=c.ns.filter(n=>a.prog[c[0]+"-"+n]).map(n=>{const v=a.prog[c[0]+"-"+n];return nomeItem(c,n)+(typeof v==="string"&&v?` (${d(v)})`:"")});return`<p><b>${c[1]}</b> — ${ok.length}/${c[2]}<br><small>${ok.length?esc(ok.join(", ")):"nenhum concluído"}</small></p>`}).join("")}</div>`;
+<h2>7. Jornada da Aprendiz</h2><p>Progresso geral: <b>${pct}%</b> (${all} de ${tot} itens concluídos)</p>${CC.map(c=>{const ok=c.ns.filter(n=>a.prog[c[0]+"-"+n]).map(n=>{const v=a.prog[c[0]+"-"+n];return nomeItem(c,n)+(typeof v==="string"&&v?` (${d(v)})`:"")});return`<p><b>${c[1]}</b> — ${ok.length}/${c[2]}<br><small>${ok.length?esc(ok.join(", ")):"nenhum concluído"}</small></p>`}).join("")}${regs}</div>`;
 }
 function imprimir(a){
   const p=$("#printArea"),t=document.title;
